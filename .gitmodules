@@ -1,0 +1,6 @@
+[submodule "paralegal-bench"]
+	path = paralegal-bench
+	url = git@github.com:brownsys/paralegal-bench
+[submodule "paralegal"]
+	path = paralegal
+	url = git@github.com:brownsys/paralegal
