@@ -155,6 +155,11 @@ runner as
 $ runner/target/debug/runner --keep-temporaries eval-config.toml --codeql-path /path/to/codeql/executable
 ```
 
+The runner will fail if any build or codeql analysis fails. It will also issue
+an "error" log message for every policy where the output diverges from the
+expected output with information which policy failed, what the expected output
+was and what the actual output was.
+
 ## Organization
 
 **Make sure you've fetched the submodules by cloning with `--recursive` or
