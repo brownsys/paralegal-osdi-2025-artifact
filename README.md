@@ -59,6 +59,24 @@ rustc 1.74.0-nightly (58eefc33a 2023-08-24)
 You will also require python 3 to plot the graphs. Please follow the installation
 instruction for your platform.
 
+If you wish to reproduce our CodeQL results you must install CodeQL too. The
+results in our paper were obtained with 2.19.3. Download the binaries for your
+platform from the
+[releases
+page](https://github.com/github/codeql-cli-binaries/releases/tag/v2.19.3) and
+unzip the archive. You will need this path later to run the evaluator. One way
+to store it is to set an alias. For example on linux you may consider this set
+of instructions:
+
+```bash
+wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3/codeql-linux64.zip
+unxip codeql-linux64.zip
+alias codeql=$(realpath codeql/codeql)
+```
+
+In addition running CodeQL requires you have a C++ compiler like gcc or clang as
+well as cmake installed.
+
 **This next set of instructions is only if you are operating on Linux.** 
 
 Retrieve the system root for the Rust toolchain, e.g. with my example output
@@ -92,11 +110,13 @@ library, so we provide the path here.
 
 ## Step-by-step for reproducing results
 
-You can run the entire benchmark with
+You can run all performance benchmarks with
 
 ```bash
 $ (cd paralegal-bench && cargo run --bin griswold --release -- bconf/bench-config.toml)
 ```
+
+This will take about 90 minutes.
 
 Some notes on this configuration (`bconf/bench-config.toml`):
 
@@ -105,10 +125,23 @@ Some notes on this configuration (`bconf/bench-config.toml`):
   the numbers tend to be similar even for just one run and this makes the
   overall runtime almost 5 times lower. If you so desire, you may comment the
   option back in at the top of the file.
-- The timeout set in the configuration is 5 minutes, whereas in the paper we say
-  the PDG construction for Lemmy times out in 10min. We have tested it with
-  10min, the limit of 5 here is for your convenience. You may test different
-  ones if you so desire.
+- In the configuration the experiments that are known to time out in 15min are
+  commented out for your convenience. If you would like to check that they do
+  feel free to comment them back in *or* there is also a separate
+  `timed-out.toml` configuration you can use to *just* check the experiment
+  runs that time out.
+
+Once the benchmarks have finished TODO plot
+
+To check our CodeQL comparison you run a similar coordination program.
+
+```bash
+$ cd codeql-experimentation
+$ (cd runner && cargo build)
+$ runner/target/debug/runner --keep-temporaries eval-config.toml
+```
+
+TODO output
 
 ## Organization
 
@@ -134,8 +167,8 @@ This artifact is organized as follows:
   For more documentation on the analyzer see the [online
   documentation](https://brownsys.github.io/paralegal).
 
-- The `paralegal-bench` directory contains the benchmark coordinator and source
-  code for our use cases.
+- The `paralegal-bench` directory contains the performance benchmark coordinator
+  and source code for our use cases.
 
   - `bconf` contains configuration files for various benchmark runs. The most
     important one being `bench-config.toml`, which is the one used to produce
@@ -160,7 +193,19 @@ This artifact is organized as follows:
 - The `plotting` directory contains python scripts to plot the graphs. Install
   the dependencies with `python3 -m pip install -r plotting/requirements.txt`.
 
-## Benchmarker output format
+- The `codeql-experimentation` directory contains our C++ translations of
+  applications and the CodeQL translations of our policies.
+
+  - `cpp` contains C++ source code for examples we tried with CodeQL, including
+    the source for our application translations.
+  - `runner` coordination program for replicating our codeql findings
+  - `eval-config.toml` an index file for which policies should be run on which
+    application. Input to the `runner`.
+  - `real-world-policies` the ql source code for our policy translations
+  - `expected` CodeQL output as we observed it
+  - `policy-coding` raw data of how we labeled sections in the CodeQL policies
+
+## Performance Benchmarker Output Format
 
 This section explains the output structure create by the `griswold` benchmark coordinator.
 
@@ -184,7 +229,39 @@ the format `<timestamp>-<purpose>` with the following purposes:
   - `sys.toml`: information about the system that this experiment was run on.
   - `bench-config.toml`: a copy of the configuration that was input to this run
 
-## Case study versions
+## CodeQL Comparison
+
+The `codeql-experimentation` contains the code for our comparison with CodeQL.
+
+The `runner` program provides a convenient way to run the specific examples we
+mention in the paper. Effectively it runs a sequence of shell (build) commands,
+then compares the output from codeql to the examples in `expected`. Similar to
+`griswold` each run of this tool creates a new output `results/<timestamp>`.
+There you'll find stdout and stderr from all called commands. Furthermore if you
+run it with `--keep-temporaries` you can see the captured codeql output in
+`results/<timestamp>/tmp`.
+
+
+If you want to run the examples manually then you must do the following. Take
+the "Plume" example, which also has the third party library "plib" and we use
+the "plume-data-deletion.ql" policy.
+
+```bash
+cd cpp/plume
+cd plib
+mkdir build
+cd build
+cmake ..
+cmake --build .
+cd ..
+codeql database create --overwrite qdb --language cpp
+codeql query run -d qdb ../../real-world-policies/plume-data-deletion.ql
+```
+
+And now compare that output to `expected/plume-data-deletion.ql`.
+
+
+## Case Study Versions
 
 | Application | Source Repo | Commit |
 | --- | --- | --- |
