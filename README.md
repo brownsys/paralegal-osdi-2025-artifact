@@ -71,7 +71,14 @@ of instructions:
 ```bash
 wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3/codeql-linux64.zip
 unxip codeql-linux64.zip
-alias codeql=$(realpath codeql/codeql)
+```
+
+You need to ensure the executable can be found by our comparison benchmark
+runner. You may add it to your path with or provide it to the runner via the
+`--codeql-command` flag.
+
+```bash
+export PATH="$PATH:$(realpath codeql)"
 ```
 
 In addition running CodeQL requires you have a C++ compiler like gcc or clang as
@@ -141,7 +148,12 @@ $ (cd runner && cargo build)
 $ runner/target/debug/runner --keep-temporaries eval-config.toml
 ```
 
-TODO output
+If you did not add the `codeql` command to your `PATH`, you should invoke the
+runner as 
+
+```bash
+$ runner/target/debug/runner --keep-temporaries eval-config.toml --codeql-path /path/to/codeql/executable
+```
 
 ## Organization
 
@@ -260,6 +272,58 @@ codeql query run -d qdb ../../real-world-policies/plume-data-deletion.ql
 
 And now compare that output to `expected/plume-data-deletion.ql`.
 
+### Explanations of Expected Outputs
+
+- **Plume Data Deletion Policy**: This policy matches user data to deletion sink
+  flows. We tried it for three types of user data, and as such if output
+  contains three rows fetching different types of data and three calls to an
+  appropriate delete sink we can call this policy succeeding.
+- **mCaptcha Limited Collection Policy**: The policy checks for the presence of
+  a function call that authorizes the collection of data and a control flow
+  influence of its return value on the collection. If the CodeQL output contains
+  that function call, then this policy recognized that the code does not contain
+  a violation.
+- **mCaptcha Deletion Policy**: The output is a tuple showing where the private
+  data is retrieved in the delete controller and where the delete method is
+  called on it. Since we only test one type of private data, if the CodeQL
+  output contains at least one row, we can call the policy succeeding.
+- **Lemmy Instance Policy**: The policy checks whether there exists a retrieval
+  for data connected to an "instance" without prior check that the requesting
+  user is banned or deleted from that instance. If CodeQL output is empty it
+  would recognize our code is non-violating. The actual output contains two
+  rows, demonstrating that it works for the simple case (in the "perform"
+  entrypoint) but not the async case ("perform_async") entrypoint. It also shows
+  the call in line 118, because we haven't yet implemented to only check
+  function bodies reachable from the entrypoint (that one is our bad). 
+- **Atomic Safe Writes Policy**: This policy fragment represents the premise of
+  the full policy, finding a write to a specific type of data. The CodeQL output
+  should show this data flow, but it doesn't. This means a full policy would be
+  vacuously succeeding (false negative).
+- **Websubmit Deletion Policy**: The output is a tuple showing where the private
+  data is retrieved in the delete controller and where the delete method is
+  called on it. We test four types of private data and therefore if the CodeQL
+  output contains four rows with those types mentioned it would be succeeding.
+  The output we observe is empty.
+- **Websubmit Disclosure Policy**: This policy fragment represents the premise of
+  the full policy, finding sensitive data that is is written to an external
+  sink. The CodeQL output should show at least one flow but doesn't. This means
+  a full policy would be vacuously succeeding (false negative).
+- **Websubmit Scoped Storage Policy**: This auxiliary policy to data deletion
+  wants to check that user data is associated with an appropriate identifier in
+  storage. The policy as written tests the premise that sensitive data is being
+  stored. The CodeQL output should show this flow but doesn't. This means a full
+  policy would be vacuously succeeding (false negative).
+- **Freedit Expiration Policy**: This policy fragment is part of the conclusion
+  of the full policy, checking that the output from a call to retrieve the time
+  (`system_clock::now`) reaches a conditional check to guard the deletion of
+  expired data. The CodeQL output should show this flow but doesn't. This means
+  a full policy would be vacuously failing (false positive).
+- **Freedit Storage Policy**: This is an auxiliary policy to the expiration
+  check that asserts that user records must be stored with a timestamp. The file
+  being run here is a policy fragment that tests the premise of the policy,
+  finding the storage calls for user records. The CodeQL output show show at
+  least one such call but doesn't. This means a full policy would be vacuously
+  succeeding (false negative).
 
 ## Case Study Versions
 
