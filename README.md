@@ -140,7 +140,8 @@ Some notes on this configuration (`bconf/bench-config.toml`):
 
 Once the benchmarks have finished TODO plot
 
-To check our CodeQL comparison you run a similar coordination program.
+To check our CodeQL comparison you run a similar coordination program. For us
+this run took about 10min.
 
 ```bash
 $ cd codeql-experimentation
