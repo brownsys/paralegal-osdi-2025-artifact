@@ -33,7 +33,7 @@ platform that supports it e.g. Linux and OSX.
 **If this artifact was provided to you as a docker container, you may skip this section.**
 
 This artifact leverages git submodules so you must clone with `--recursive` or
-run `git submodule init && git submodule update` after cloning.
+run `git submodule update --init --recursive` after cloning.
 
 ```bash
 $ git clone git@github.com:brownsys/paralegal-osdi-2025-artifact --recursive
@@ -383,7 +383,7 @@ And now compare that output to `expected/plume-data-deletion.ql`.
 ## Organization
 
 **Make sure you've fetched the submodules by cloning with `--recursive` or
-running `git submodule init && git submodule update`**
+run `git submodule update --init --recursive`**
 
 This artifact is organized as follows:
 
