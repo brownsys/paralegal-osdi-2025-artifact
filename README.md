@@ -152,7 +152,9 @@ $ plotting/plot.py
 
 You will find the created plots in the `plotting` directory. For explanations of
 each graph/table, see [Plots](#plots). The plotting script also supports a
-number of command line parameters. Run it with `--help` to learn more.
+number of command line parameters. Run it with `--help` to learn more. The
+reference plots we generated from our experiment run you will find in
+`plotting/reference`. 
 
 To check our CodeQL comparison you run a similar coordination program to `griswold`. For us
 this run took about 10min.
@@ -237,30 +239,6 @@ This artifact is organized as follows:
   - `expected` CodeQL output as we observed it
   - `policy-coding` raw data of how we labeled sections in the CodeQL policies
 
-## Performance Benchmarker Output Format
-
-This section explains the output structure create by the `griswold` benchmark coordinator.
-
-Results are written to the `--result-path` argument (default to "results"). Each
-time you call `griswold` it creates a new set of directories. They all have
-the format `<timestamp>-<purpose>` with the following purposes:
-
-- `logs`: stdout and stderr from the PDG generation (called `compile`) and
-  combined output from the policy 
-  
-- `pp`: The source code that was involved in the analysis. The lines of code
-  actually visited. This is used in the roll-forward experiment
-- `run`: Everything considered result data which are the following files:
-
-  - `results.csv`: incrementally written statistics and results for each run.
-  - `controllers.csv`: incrementally written statistics about individual
-    controllers. 
-    
-    Multiple such statistics are written for a single run. The `run_id` field
-    tells you which run each row belongs to. 
-  - `sys.toml`: information about the system that this experiment was run on.
-  - `bench-config.toml`: a copy of the configuration that was input to this run
-
 ## Plots
 
 **General Note:** Since the acceptance of the paper we've made improvements to
@@ -274,9 +252,9 @@ as the old versions or analogous results.
 
 ### ide_ci_plot(.png)
 
-![Workspace vs all crates plot](plotting/ide_ci_plot.png)
+![Workspace vs all crates plot](plotting/reference/ide_ci_plot.png)
 
-The right and side of this graph is an updated version of Figure 9 in the paper.
+The right and side of this graph is an updated version of **Figure 9** in the paper.
 The left hand side is new and represents the mentioned "all crates"
 configuration. We will change the description in the paper to explain that we
 expect this "all crates" setup to be the one user's run in CI, where soundness
@@ -286,18 +264,18 @@ run on single controllers (see [per_controller_plot](#per_controller_plotpng)).
 
 ### per_controller_plot(.png)
 
-![Per Controller Runtime Plot](plotting/per_controller_plot.png)
+![Per Controller Runtime Plot](plotting/reference/per_controller_plot.png)
 
-This plot is an updated version of Figure 10 in the paper. Runtimes have gotten
+This plot is an updated version of **Figure 10** in the paper. Runtimes have gotten
 a bit lower, due to optimizations. This uses the "Workspace Crates Only" setup
 and shows combined runtime (PDG generation and policy checking).
 
 ### k_depth_plot(.png)
 
-![Adaptive Depth Impact Plot](plotting/k_depth_plot.png)
+![Adaptive Depth Impact Plot](plotting/reference/k_depth_plot.png)
 
-This plot is new and set to replace Figure 11 in the paper. The purpose of this
-plot remains the same. It quantifies the impact of using our marker-guided
+This plot is new and set to replace **Figure 11** in the paper. The purpose of
+this plot remains the same. It quantifies the impact of using our marker-guided
 "adaptive inlining" optimization. The graph compares total runtime (PDG
 generation + policy check) for Paralegal when using "adaptive inlining" vs a
 fixed-k limit. Both approaches limit the depth of function call stacks that will
@@ -325,9 +303,9 @@ the bar and the timeout marker.
 
 ### old_adaptive_plot(.png)
 
-![Prior Adaptive Depth plot](plotting/old_adaptive_plot.png)
+![Prior Adaptive Depth plot](plotting/reference/old_adaptive_plot.png)
 
-This plot is a recreation of Figure 11 from the paper with the new
+This plot is a recreation of **Figure 11** from the paper with the new
 numbers/optimizations. This plot is provided for transparency, it will be
 removed from the paper.
 
@@ -340,14 +318,14 @@ gains are less pronounced.
 
 ### dependency_times(.txt)
 
-[Table](plotting/dependency_times.txt)
+[Table](plotting/reference/dependency_times.txt)
 
 The graphs shown so far do not include the time needed to compile the
 dependencies before running the PDG generation. This is only needed once (for
-each dependency change). In the paper we plan to add a sentence to 7.4 about the
-overhead Paralegal introduces to this dependency compilation, because we persist
-the MIR bodies for each dependency in addition to the compilation. The claim
-will be similar to:
+each dependency change). In the paper we plan to add a sentence to **Section
+7.4** about the overhead Paralegal introduces to this dependency compilation,
+because we persist the MIR bodies for each dependency in addition to the
+compilation. The claim will be similar to:
 
 > As a rustc plugin Paralegal must compile the dependencies first before it can
 > generate a PDG. In addition Paralegal dumps the MIR code for each function in
@@ -363,9 +341,9 @@ used, when dependency compilation is parallelized.
 
 ### atomic_data_locs(.txt)
 
-[Table](plotting/dependency_times.txt)
+[Table](plotting/reference/dependency_times.txt)
 
-This table shows the calculated numbers we quote in section 7.3. In the second
+This table shows the calculated numbers we quote in **Section 7.3**. In the second
 table we quote the numbers from the "LoC Workspace" column, as this represents
 the lines of code that could cause a marker change. We plan to add the "Mean
 #LoC changed" from "LoC Including Deps" statistic to the paper with something
@@ -459,6 +437,32 @@ And now compare that output to `expected/plume-data-deletion.ql`.
   finding the storage calls for user records. The CodeQL output show show at
   least one such call but doesn't. This means a full policy would be vacuously
   succeeding (false negative).
+
+## Performance Benchmarker Output Format
+
+This section explains the output structure create by the `griswold` benchmark coordinator.
+
+Results are written to the `--result-path` argument (default to "results"). Each
+time you call `griswold` it creates a new set of directories. They all have
+the format `<timestamp>-<purpose>` with the following purposes:
+
+- `logs`: stdout and stderr from the PDG generation (called `compile`) and
+  combined output from the policy 
+  
+- `pp`: The source code that was involved in the analysis. The lines of code
+  actually visited. This is used in the roll-forward experiment
+- `run`: Everything considered result data which are the following files:
+
+  - `results.csv`: incrementally written statistics and results for each run.
+  - `controllers.csv`: incrementally written statistics about individual
+    controllers. 
+    
+    Multiple such statistics are written for a single run. The `run_id` field
+    tells you which run each row belongs to. 
+  - `sys.toml`: information about the system that this experiment was run on.
+  - `bench-config.toml`: a copy of the configuration that was input to this run
+
+
 
 ## Case Study Versions
 
