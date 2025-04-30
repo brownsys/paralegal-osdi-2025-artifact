@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update
 RUN apt-get install -y apt-utils
-RUN apt-get install -y build-essential curl clang libclang-dev liblz4-dev libssl-dev cmake python3 python3-pip wget unzip
+RUN apt-get install -y build-essential curl clang libclang-dev liblz4-dev libssl-dev cmake python3 python3-pip wget unzip pkg-config
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain 1.75 -y
 ENV PATH="/root/.cargo/bin:$PATH"
 RUN rustup toolchain install nightly-2023-08-25 -c rustc-dev -c rust-src -c rustfmt -c clippy
@@ -25,9 +25,12 @@ RUN python3 -m pip install -r plotting/requirements.txt
 ADD . .
 RUN cp etc/docker-bench-conf.toml paralegal-bench/bconf/bench-config.toml
 
-RUN cd codeql-experimentation/runner && cargo build --release
-RUN cd paralegal-bench && cargo build --release --bin griswold
-RUN cd paralegal && cargo build --release -p paralegal-flow
+# Download the dependencies. There's no native way to do *just* that so we use check 
+# instead and throw away any potential build artifacts
+RUN cd codeql-experimentation/runner && cargo check --locked && cargo clean
+RUN cd paralegal-bench && cargo check --locked && cargo clean
+RUN cd paralegal && cargo check --locked && cargo clean
+RUN for i in $(ls paralegal-bench/case-studies/); do (cd "paralegal-bench/case-studies/$i" && cargo +nightly-2023-08-25 check && cargo +nightly-2023-08-25 clean); done
 
 
 
