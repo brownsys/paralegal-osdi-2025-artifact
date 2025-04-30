@@ -11,8 +11,9 @@ repos for [the "Paralegal" analyzer](https://github.com/brownsys/paralegal) or
 [the benchmarker](https://github.com/brownsys/paralegal-bench), which
 have the latest updates.**
 
-If you are receiving this artifact as a docker container you should start with
-[Running the Docker Image](#running-the-docker-image).
+If you are receiving this artifact as a docker container (for example from
+[Zenodo](https://doi.org/10.5281/zenodo.15313526)) you should start with [Running the Docker
+Image](#running-the-docker-image).
 
 If you are intending to use [this
 repository](https://github.com/brownsys/paralegal-osdi-2025-artifact) from
@@ -53,7 +54,7 @@ to view the plots.
 
 ```bash
 mkdir output
-docker -ti --name paralegal:artifact --mount type=bind,src=output,dst=output
+docker run -ti --mount type=bind,src="$(pwd)/output",dst=/home/aec/artifact/output paralegal:osdi25-artifact
 ```
 
 ## Setup and Installation
