@@ -44,7 +44,6 @@ def main():
         default=None,
         action='append',
         help="Generate plots for this experiment. Defaults to all.",
-        nargs="*",
         choices=[
             p.name() for p in plots
         ]
@@ -73,9 +72,10 @@ def main():
     if not args.experiment:
         to_run = plots
     else:
+        print(args.experiment)
+        options = { p.name(): p for p in plots }
         to_run = [
-            p for p in plots
-            if p.name() in args.experiment
+            options[p] for p in args.experiment
         ]
     
     for plot in to_run:
@@ -114,7 +114,7 @@ def ide_ci_plot(outfile):
     
     plot2.set_xlabel("Application")
 
-    plt.savefig(outfile)
+    plt.savefig(outfile, bbox_inches='tight')
 
 @plot(output_ext=".png")
 def per_controller_plot(outfile):
@@ -134,7 +134,7 @@ def per_controller_plot(outfile):
     ax.set_xlabel("LoC in PDG")
     ax.set_ylabel("Time in s")
 
-    plt.savefig(outfile)
+    plt.savefig(outfile, bbox_inches='tight')
 
 @plot(output_ext=".png")
 def k_depth_plot(outfile):
@@ -181,7 +181,7 @@ def k_depth_plot(outfile):
         val = max(k_val, row['Adaptive'])
         plot.text(i, val, "k = " + str(int(k)), ha='center', va='bottom')
 
-    plt.savefig(outfile)
+    plt.savefig(outfile, bbox_inches='tight')
 
 @plot(output_ext=".png")
 def old_adaptive_plot(outfile):
@@ -206,7 +206,7 @@ def old_adaptive_plot(outfile):
     plot.set_ylabel("Relative PDG Construction and Policy Runtime")
     plot.set_xlabel("Application")
 
-    plt.savefig(outfile)
+    plt.savefig(outfile, bbox_inches='tight')
 
 @plot(output_ext=".txt")
 def dependency_times(outfile):
