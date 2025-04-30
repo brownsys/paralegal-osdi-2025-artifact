@@ -1,4 +1,4 @@
-# Artifact for the submission of "Paralegal" to OSDI 2025
+# Artifact for the Submission of "Paralegal" to OSDI 2025
 
 Welcome to the software artifact for the 2025 submission of the static Rust
 privacy and security analyzer "Paralegal". This repository ties together the
@@ -11,16 +11,19 @@ repos for [the "Paralegal" analyzer](https://github.com/brownsys/paralegal) or
 [the benchmarker](https://github.com/brownsys/paralegal-bench), which
 have the latest updates.**
 
-If you are intending to use this artifact from its repository, go to the [Setup
-and Installation](#setup-and-installation) section **before cloning the repo**.
+If you are receiving this artifact as a docker container (for example from
+[Zenodo](https://doi.org/10.5281/zenodo.15313526)) you should start with [Running the Docker
+Image](#running-the-docker-image).
 
-If you are receiving this artifact as a docker container you'll likely want to
-skip directly to [Step by step for reproducing
-results](#step-by-step-for-reproducing-results).
+If you are instead intending to use [this
+repository](https://github.com/brownsys/paralegal-osdi-2025-artifact) from
+source, go to the [Setup and Installation](#setup-and-installation) section
+**before cloning the repo**.
 
-If you want to learn more about the organization of this repository see [Organization](#organization).
+If you want to learn more about the organization of this repository see
+[Organization](#organization).
 
-## Platform compatibility
+## Platform Compatibility
 
 The **analyzer** has been tested on Ubuntu and OSX, but should in theory run on any
 Linux and possibly Windows too, though no guarantees are made.
@@ -28,7 +31,33 @@ Linux and possibly Windows too, though no guarantees are made.
 The **benchmarker** relies on UNIX features (process groups) and can only run on a
 platform that supports it e.g. Linux and OSX.
 
-## Setup and installation
+## Running the Docker Image
+
+You will require bzip2 and `docker` on the command line. This assumes a file
+name of `paralegal-osdi25-docker.tar.bz2`
+
+```bash
+$ bunzip2 paralegal-osdi25-docker.tar.bz2 | docker image load
+```
+
+Verify it has been loaded 
+
+```bash
+$ docker image list
+TODO
+```
+
+Then you can start and connect to the image with the following command. Note the
+`--mount` option and the `mkdir` are used here to establish a way to transfer
+data from the image to your machine. This is intended to be used later for you
+to view the plots.
+
+```bash
+mkdir output
+docker run -ti --mount type=bind,src="$(pwd)/output",dst=/home/aec/artifact/output paralegal:osdi25-artifact
+```
+
+## Setup and Installation
 
 **If this artifact was provided to you as a docker container, you may skip this section.**
 
@@ -46,6 +75,8 @@ builds against a specific Rust nightly version (see
 
 ```bash
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none
+# Sets the environment
+$ . "$HOME/.cargo/env"
 ```
 
 Rustup will install the requisite toolchains automatically. You can download the
@@ -58,8 +89,13 @@ $ (cd paralegal && rustc --version)
 rustc 1.74.0-nightly (58eefc33a 2023-08-24)
 ```
 
-You will also require python 3 to plot the graphs. Please follow the [installation
-instruction for your platform](https://www.python.org/downloads/).
+You will also require python 3 and pip to plot the graphs. Please follow the
+[installation instruction for your platform](https://www.python.org/downloads/).
+For Ubuntu for example the command is 
+
+```bash
+sudo apt install python3 python3-pip
+```
 
 To install the dependencies for the plotting script use
 
@@ -68,15 +104,15 @@ $ python3 -m pip install -r plotting/requirements.txt
 ```
 
 If you wish to reproduce our CodeQL results you must install CodeQL too. The
-results in our paper were obtained with 2.19.3. Download the binaries for your
+results in our paper were obtained with 2.19.3. Download the bundle for your
 platform from the
 [releases
-page](https://github.com/github/codeql-cli-binaries/releases/tag/v2.19.3) and
-unzip the archive. You will need this path later to run the evaluator.
+page](https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.19.3) and
+unzip the archive.
 
 ```bash
-wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3/codeql-linux64.zip
-unxip codeql-linux64.zip
+wget https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.19.3/codeql-bundle-linux64.tar.gz
+tar -xf codeql-bundle-linux64.tar.gz
 ```
 
 You need to ensure the executable can be found by our comparison benchmark
@@ -121,7 +157,7 @@ analyzer again (which wraps around `rustc`), which dynamically links against
 `libLLVM`, but for some reason in this nested call the linker cannot find this
 library, so we provide the path here.
 
-## Step-by-step for reproducing results
+## Step-by-step for Reproducing Results
 
 You can run all performance benchmarks with
 
@@ -148,32 +184,36 @@ Performance benchmarks are controlled by the configuration (e.g.
 The output from the benchmark is written to `paralegal-bench/results`. For more
 information on the format see [Performance Benchmarker Output
 Format](#performance-benchmarker-output-format). Once the benchmarks have
-finished, generate the plots by running
+finished, generate the plots by running `plotting/plot.py`. If you are on the
+docker image you will likely want to redirect the output to the mounted `output`
+directory as follows:
 
 ```bash
-$ plotting/plot.py
+$ plotting/plot.py -o output
 ```
 
-You will find the created plots in the `plotting` directory. For explanations of
-each graph/table, see [Plots](#plots). The plotting script also supports a
-number of command line parameters. Run it with `--help` to learn more. The
-reference plots we generated from our experiment run you will find in
-`plotting/reference`. 
+You will find the created plots in the directory you set with `-o` or, if unset,
+the `plotting` directory. For explanations of each graph/table, see
+[Plots](#plots). The plotting script also supports a number of command line
+parameters. Run it with `--help` to learn more. The reference plots we generated
+from our experiment run you will find in `plotting/reference`. On docker you may
+wish to copy the reference plots to `output` as well for viewing with `cp
+plotting/reference output/reference`.
 
 To check our CodeQL comparison you run a similar coordination program to `griswold`. For us
 this run took about 10min.
 
 ```bash
 $ cd codeql-experimentation
-$ (cd runner && cargo build)
-$ runner/target/debug/runner --keep-temporaries eval-config.toml
+$ (cd runner && cargo build --release)
+$ runner/target/release/runner --keep-intermediates eval-config.toml
 ```
 
 If you did not add the `codeql` command to your `PATH`, you should invoke the
 runner as 
 
 ```bash
-$ runner/target/debug/runner --keep-temporaries eval-config.toml --codeql-path /path/to/codeql/executable
+$ runner/target/release/runner --keep-intermediates eval-config.toml --codeql-path /path/to/codeql/executable
 ```
 
 The runner will fail if any build or codeql analysis fails. It will also issue
@@ -307,7 +347,6 @@ then compares the output from codeql to the examples in `expected`. Similar to
 There you'll find stdout and stderr from all called commands. Furthermore if you
 run it with `--keep-temporaries` you can see the captured codeql output in
 `results/<timestamp>/tmp`.
-
 
 If you want to run the examples manually then you must do the following. Take
 the "Plume" example, which also has the third party library "plib" and we use
