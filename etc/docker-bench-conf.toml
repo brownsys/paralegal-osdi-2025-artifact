@@ -1,0 +1,877 @@
+#####################################################################
+# General settings
+#####################################################################
+
+stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
+# Tried 10 min as well but didn't improve
+pdg-timeout = "15min"
+#repeats = 5
+
+#####################################################################
+# Defition of use case applications
+#
+# Starting with the base configurations for the use cases used in most
+# experiment.
+#####################################################################
+
+[app-config.lemmy]
+source-dir = "case-studies/lemmy"
+external-annotations = "external-annotations.toml"
+
+[app-config.plume]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
+[app-config.websubmit]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+
+[app-config.freedit]
+source-dir = "case-studies/freedit"
+flow-args = ["--relaxed"]
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "router"]
+cargo-args = ["--lib"]
+
+[app-config.hyperswitch.env]
+LD_LIBRARY_PATH = "/root/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
+
+[app-config.contile]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+
+[app-config.mcaptcha]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha"]
+external-annotations = "external-annotations.toml"
+
+# Now comes the configuration for the roll-forward experiment.
+
+[app-config.roll-forward-atomic]
+# Must point to a directory containing the
+# https://github.com/atomicdata-dev/atomic-server git repository
+#
+# If the directory does not exist, the runner will to auto-clone. The parent
+# directory must exist however
+source-dir = "../clones/atomic-server"
+clone = "https://github.com/atomicdata-dev/atomic-server"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+    "--relaxed",
+]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.roll-forward-atomic.env]
+RUSTUP_TOOLCHAIN = "1.75"
+
+[app-config.roll-forward-atomic-ws]
+# Must point to a directory containing the
+# https://github.com/atomicdata-dev/atomic-server git repository
+#
+# If the directory does not exist, the runner will to auto-clone. The parent
+# directory must exist however
+source-dir = "../clones/atomic-server"
+clone = "https://github.com/atomicdata-dev/atomic-server"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+    "--relaxed",
+    "--include=crate",
+]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.roll-forward-atomic-ws.env]
+RUSTUP_TOOLCHAIN = "1.75"
+
+# Lastly a copy of all case studies in the "workspace" configuration where only the
+# crates in the local workspace are included.
+
+[app-config.lemmy-ws]
+source-dir = "case-studies/lemmy"
+external-annotations = "external-annotations.toml"
+flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
+]
+
+[app-config.plume-ws]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--no-default-features", "--features", "postgres"]
+flow-args = [
+    "--target=plume-models",
+    "--include=crate",
+    "--include=plume-api",
+    "--include=plume-macro",
+    "--include=plume-front",
+    "--include=plume-common",
+    "--include=plume-cli",
+]
+
+[app-config.websubmit-ws]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+flow-args = ["--include=crate"]
+
+[app-config.freedit-ws]
+source-dir = "case-studies/freedit"
+flow-args = ["--relaxed", "--include=crate"]
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data-ws]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib", "--include=crate"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data-ws.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch-ws]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+flow-args = [
+    "--target=router",
+    "--include=crate",
+    "--include=api_models",
+    "--include=cards",
+    "--include=common_enums",
+    "--include=common_utils",
+    "--include=masking",
+    "--include=router_derive",
+    "--include=drainer",
+    "--include=diesel_models",
+    "--include=external_services",
+    "--include=redis_interface",
+    "--include=router_env",
+    "--include=scheduler",
+    "--include=storage_impl",
+]
+
+[app-config.hyperswitch-ws.env]
+LD_LIBRARY_PATH = "/root/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
+
+[app-config.contile-ws]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+flow-args = ["--include=crate"]
+
+[app-config.mcaptcha-ws]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha", "--include=crate"]
+external-annotations = "external-annotations.toml"
+
+
+#####################################################################
+# Experiment 1: All crates (CI) environment
+#####################################################################
+
+[[experiment.ci]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+cnl = true
+
+#####################################################################
+# Experiment 1.5: Extra Contile run for the CI experiment
+#####################################################################
+
+# Special second contile run with a +1 depth to deal with the false positive.
+[[experiment.ci-contile-extra]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+k-depth = 1
+cnl = true
+
+#####################################################################
+# Experiment 2: Workspace-only environment
+#####################################################################
+
+[[experiment.ws]]
+mode = "case-study"
+application = "plume"
+app-config-override = "plume-ws"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "freedit"
+app-config-override = "freedit-ws"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "websubmit"
+app-config-override = "websubmit-ws"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "atomic-data"
+app-config-override = "atomic-data-ws"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+app-config-override = "lemmy-ws"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+app-config-override = "lemmy-ws"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+app-config-override = "hyperswitch-ws"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+app-config-override = "contile-ws"
+cnl = true
+
+[[experiment.ws]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+app-config-override = "mcaptcha-ws"
+cnl = true
+
+#####################################################################
+# Experiment 3: k-depth baseline
+#####################################################################
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 19
+cnl = true
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 6
+cnl = true
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 14
+cnl = true
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 4
+cnl = true
+
+# [[experiment.k-depth]]
+# mode = "case-study"
+# lemmy-controller-run-mode = "all"
+# application = "lemmy"
+# policy-mode = "unified"
+# adaptive-depth = false
+# bugs = ["bug4"]
+# new-version = "api"
+# k-depth = 24
+# cnl = true
+
+# [[experiment.k-depth]]
+# mode = "case-study"
+# lemmy-controller-run-mode = "all"
+# application = "lemmy"
+# policy-mode = "unified"
+# adaptive-depth = false
+# bugs = ["bug4"]
+# new-version = "api-crud"
+# k-depth = 24
+# cnl = true
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 6
+cnl = true
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 11
+cnl = true
+
+[[experiment.k-depth]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 3
+cnl = true
+
+#####################################################################
+# Experiment 4: Old no-adaptive-depth experiment
+#####################################################################
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "plume-ws"
+cnl = true
+
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "freedit-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "websubmit-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "atomic-data-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api"
+app-config-override = "lemmy-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api-crud"
+app-config-override = "lemmy-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "contile-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "hyperswitch-ws"
+cnl = true
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+adaptive-depth = false
+app-config-override = "mcaptcha-ws"
+cnl = true
+
+#####################################################################
+# Experiment 5: Roll Forward
+#####################################################################
+
+[[experiment.atomic-roll-forward]]
+mode = "roll-forward"
+application = "atomic-data"
+app-config-override = "roll-forward-atomic"
+repeats = 1
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
+expectation = "pass"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
+repeats = 1
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
+expectation = "pass"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
+repeats = 1
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
+expectation = "pass"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+repeats = 1
+cnl = true
+
+# Skipping this range of 73 commits, because they don't compile (even with
+# regular rustc, this is not a Paralegal issue). See
+# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
+# for more information
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2"
+repeats = 1
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "1b9aee9cbac33b3636ebf6153f4d866b4c310fe4"
+expectation = "pass"
+repeats = 1
+external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+cnl = true
+
+# Skipping 8 commits that don't compile with rustc. This is not a Paralegal
+# issue. See
+# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
+# for more information
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "83f8f4f411b8a502f9e122a470629ab15ce29adc"
+repeats = 1
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+repeats = 1
+expectation = "pass"
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+repeats = 1
+expectation = "pass"
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+repeats = 1
+expectation = "fail"
+cnl = true
+
+# Second run of roll forward to collect numbers for lines changed in just the
+# local crate
+
+[[experiment.atomic-roll-forward]]
+mode = "roll-forward"
+application = "atomic-data"
+app-config-override = "roll-forward-atomic-ws"
+repeats = 1
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
+expectation = "pass"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
+repeats = 1
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
+expectation = "pass"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
+repeats = 1
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
+expectation = "pass"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+repeats = 1
+cnl = true
+
+# Skipping this range of 73 commits, because they don't compile (even with
+# regular rustc, this is not a Paralegal issue). See
+# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
+# for more information
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2"
+repeats = 1
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "1b9aee9cbac33b3636ebf6153f4d866b4c310fe4"
+expectation = "pass"
+repeats = 1
+external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+cnl = true
+
+# Skipping 8 commits that don't compile with rustc. This is not a Paralegal
+# issue. See
+# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
+# for more information
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "83f8f4f411b8a502f9e122a470629ab15ce29adc"
+repeats = 1
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+repeats = 1
+expectation = "pass"
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+repeats = 1
+expectation = "pass"
+cnl = true
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
+external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+repeats = 1
+expectation = "fail"
+cnl = true
+
+#####################################################################
+# Experiment 6: Measuring analysis time for individual controllers
+#####################################################################
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "plume-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "freedit-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "websubmit-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "atomic-data-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "lemmy"
+policy-mode = "unified"
+bugs = ["bug4"]
+controller-run-mode = "all-separate"
+new-version = "api"
+app-config-override = "lemmy-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "lemmy"
+policy-mode = "unified"
+bugs = ["bug4"]
+controller-run-mode = "all-separate"
+new-version = "api-crud"
+app-config-override = "lemmy-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "hyperswitch-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "contile-ws"
+cnl = true
+
+[[experiment.per-controller-time]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+controller-run-mode = "all-separate"
+app-config-override = "mcaptcha-ws"
+cnl = true
+
+#####################################################################
+# Experiment 7: Measuring the time taken to handle dependencies.
+#####################################################################
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+clean = true
+cnl = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+clean = true
+cnl = true
+
+#####################################################################
+# Experiment 8: Comparing with manual policies
+#####################################################################
+
+[[experiment.manual]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+
+[[experiment.manual]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+
+[[experiment.manual]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
