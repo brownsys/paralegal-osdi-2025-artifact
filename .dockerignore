@@ -1,0 +1,8 @@
+**/target/
+**/venv/
+**/__pycache__/
+/paralegal-bench/results/
+**/.git/
+**/build/
+**/_codeql_build_dir/
+/codeql-experimentation/results
