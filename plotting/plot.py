@@ -48,6 +48,13 @@ def main():
             p.name() for p in plots
         ]
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default=None,
+        help="Output directory for the plots (must exist). Defaults to directory this script is stored in.",
+    )
     args = parser.parse_args()
 
     if args.input is None:
@@ -63,7 +70,7 @@ def main():
         latest_subdir = max(subdirs, key=lambda d: datetime.strptime(d.removesuffix("-run"), "%Y-%m-%dT%H-%M-%S"))
         args.input = os.path.join(results_dir, latest_subdir)
 
-
+    output_dir = args.output if args.output is not None else os.path.dirname(os.path.abspath(__file__))
     results_dir = args.input
     all_results = pd.read_csv(results_dir + "/results.csv")
     controller_stats = pd.read_csv(results_dir + "/controllers.csv")
@@ -80,7 +87,7 @@ def main():
     
     for plot in to_run:
         print(f"Running {plot.name()}...")
-        plot(f"{plot.name()}{plot.output_ext}")
+        plot(os.path.join(output_dir, f"{plot.name()}{plot.output_ext}"))
 
 @plot(output_ext=".png")
 def ide_ci_plot(outfile):
