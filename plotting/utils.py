@@ -63,7 +63,14 @@ renamings_for_display = {
 def rename(n):
     return renamings_for_display.get(n, n)
 
-SYSTEM_COLORS = {
+def _expand_dict_w_rename(d):
+    return {
+        k1: v
+        for k, v in d.items()
+        for k1 in [k, rename(k)]
+    }
+
+SYSTEM_COLORS = _expand_dict_w_rename({
   'flow_time': 'C0',
   'policy_time': 'C6',
   'rustc_time': 'C11',
@@ -78,15 +85,15 @@ SYSTEM_COLORS = {
   "baseline": "C10",
   "opt": "C9",
   "mcaptcha": "C9",
-}
+})
 
-SYSTEM_MARKERS = {
-  "atomic-data": "^",
-  "plume": "v",
-  "freedit": "+",
-  "websubmit": "o",
-  "hyperswitch": "s",
-  "contile": "d",
-  "lemmy": "x",
-  "mcaptcha": "D",
-}
+SYSTEM_MARKERS = _expand_dict_w_rename({
+    "atomic-data": "^",
+    "plume": "v",
+    "freedit": "+",
+    "websubmit": "o",
+    "hyperswitch": "s",
+    "contile": "d",
+    "lemmy": "x",
+    "mcaptcha": "D",
+})

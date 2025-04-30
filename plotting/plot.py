@@ -84,11 +84,11 @@ def main():
 
 @plot(output_ext=".png")
 def ide_ci_plot(outfile):
-    e = results[results['experiment'].isin(['ide', 'ci'])].copy()
+    e = results[results['experiment'].isin(['ws', 'ci'])].copy()
     e['io_time'] = e['serialization_time'] + e['deserialization_time']
     e['pdg_time'] = e['last_self_time'] - e['rustc_time'] - e['serialization_time']
     e['policy_time'] -= e['deserialization_time']
-    metrics = ['rustc_time', 'pdg_time', 'policy_time', 'io_time']
+    metrics = ['rustc_time', 'pdg_time', 'policy_time', 'serialization_time', 'deserialization_time']
     # This combines the repeated runs
     e = e.groupby(['experiment', 'application', 'package'], dropna=False)[metrics].mean()
     # This recombines the lemmy packages
@@ -100,17 +100,17 @@ def ide_ci_plot(outfile):
         [metrics].mean()\
         .rename(index=utils.rename, columns=utils.rename)\
         .plot.bar(ax=ax1, stacked=True)
-    plot1.set_title("CI Setup")
+    plot1.set_title("All Crates")
     plot1.set_ylabel("Runtime in s")
     plot1.set_xlabel("Application")
     
-    plot2 = e[e['experiment'] == 'ide']\
+    plot2 = e[e['experiment'] == 'ws']\
         .groupby('application')\
         [metrics].mean()\
-        .rename(index= lambda x: x.removesuffix("-ide"))\
+        .rename(index= lambda x: x.removesuffix("-ws"))\
         .rename(index=utils.rename, columns=utils.rename)\
         .plot.bar(ax=ax2, stacked=True)
-    plot2.set_title("IDE Setup")
+    plot2.set_title("Workspace Crates Only")
     
     plot2.set_xlabel("Application")
 
@@ -123,10 +123,12 @@ def per_controller_plot(outfile):
     metrics = ['ctrl_time', 'pdg_locs']
     # This combines the repeated runs
     e = e.groupby(['application', 'controller', 'package'], dropna=False)[metrics].mean()\
-        .rename(index=lambda x: x.removesuffix("-ide") if isinstance(x, str) else x)
+        .rename(index=lambda x: x.removesuffix("-ws") if isinstance(x, str) else x)
     e = e.reset_index()
     fig, ax = plt.subplots()
-    for a in e['application'].unique():
+    apps = e['application'].unique()
+    last = apps[apps != 'Lemmy']
+    for a in ['Lemmy'] + list(last):
         e[e['application'] == a].plot.scatter(ax=ax, x='pdg_locs', marker=utils.SYSTEM_MARKERS[a], y='ctrl_time', color=utils.SYSTEM_COLORS[a], label=utils.rename(a))
     ax.set_title("PDG Construction and Policy Time per Controller")
     ax.set_xlabel("LoC in PDG")
@@ -136,11 +138,12 @@ def per_controller_plot(outfile):
 
 @plot(output_ext=".png")
 def k_depth_plot(outfile):
-    e = all_results[all_results['experiment'].isin(['k-depth', 'ci'])].copy()
-    e['total_time'] = e['last_self_time'] + e['policy_time']
+    e0 = all_results[all_results['experiment'].isin(['k-depth', 'ci'])].copy()
+    e0['application'] = e0['application'].apply(utils.rename)
+    e0['total_time'] = e0['last_self_time'] + e0['policy_time']
     metrics = ['total_time', 'k_depth']
     # This combines the repeated runs
-    e = e.groupby(['experiment', 'application', 'package'], dropna=False)[metrics].mean()
+    e = e0.groupby(['experiment', 'application', 'package'], dropna=False)[metrics].mean()
     # This recombines the lemmy packages
     e = e.groupby(['experiment', 'application'])[metrics].aggregate({
         'total_time': 'sum',
@@ -148,36 +151,41 @@ def k_depth_plot(outfile):
     })
 
     k_depth_setting = {
-        'lemmy': 24,
-        'plume': 19,
+        'Lemmy': 24,
     }
 
-    e_k = e.loc['k-depth']
-    series = e.loc['ci'] / e_k
-    plot = series[['total_time']].rename(index=utils.rename).plot.bar()
-    plot.axhline(1.0, ls='--', color='k', label="no adaptive inlining")
+    frame = pd.DataFrame({
+        'Adaptive': e.loc['ci']['total_time'],
+        'Fixed k': e.loc['k-depth']['total_time'],
+    })#.rename(index=utils.rename)
+
+    plot = frame.plot.bar()
+
+    max_y = max(frame.max())
     
-    for (i, (app, row)) in enumerate(series.iterrows()):
-        val = row['total_time']
-        if np.isinf(val) or pd.isna(val):
-            val = 0
-            plot.plot(i, 0.12, color="black", marker='x', markersize=3)
-            plot.text(i, 0.15, "timeout", ha='center', va='bottom', rotation='vertical')
+    e_k = e.loc['k-depth']
+    for (i, (app, row)) in enumerate(frame.iterrows()):
+        k_val = row['Fixed k']
+        k_is_nn = np.isinf(k_val) or pd.isna(k_val)
+        if k_is_nn:
+            k_val = 0
+        if k_is_nn or e0[(e0['application'] == app) & (e0['experiment'] == 'k-depth')]['total_time'].hasnans:
+            offset = 0.12
+            plot.plot(i + offset, k_val + max_y * 0.07, color="black", marker='x', markersize=3)
+            plot.text(i + offset, k_val + max_y * 0.1, "timeout", ha='center', va='bottom', rotation='vertical')
         if app in e_k.index:
             k = e_k.loc[app]['k_depth']
         else:
             # Account for config where timeouts are commented out
             k = k_depth_setting[app]
+        val = max(k_val, row['Adaptive'])
         plot.text(i, val, "k = " + str(int(k)), ha='center', va='bottom')
-    plot.set_title("Relative Runtime of k-depth vs Adaptive Approximation")
-    plot.set_ylabel("Runtime Relative to k-depth")
-    plot.set_xlabel("Application")
 
     plt.savefig(outfile)
 
 @plot(output_ext=".png")
 def old_adaptive_plot(outfile):
-    e = all_results[all_results['experiment'].isin(['adaptive-depth', 'ide'])].copy()
+    e = all_results[all_results['experiment'].isin(['adaptive-depth', 'ws'])].copy()
     e['total_time'] = e['last_self_time'] + e['policy_time']
     metrics = ['total_time', 'k_depth']
     # This combines the repeated runs
@@ -188,9 +196,9 @@ def old_adaptive_plot(outfile):
         'k_depth': 'max',
     })
 
-    series = e.loc['ide'] / e.loc['adaptive-depth']
+    series = e.loc['ws'] / e.loc['adaptive-depth']
     plot = series[['total_time']]\
-        .rename(index= lambda x: x.removesuffix("-ide"))\
+        .rename(index= lambda x: x.removesuffix("-ws"))\
         .rename(index=utils.rename, columns=utils.rename)\
         .plot.bar(legend=False)
     plot.axhline(1.0, ls='--', color='k', label="no adaptive inlining")
@@ -217,27 +225,36 @@ def dependency_times(outfile):
 @plot(output_ext=".txt")
 def atomic_data_locs(outfile):
     e = all_results[all_results['experiment'].isin(['atomic-roll-forward'])].copy()
-    e_compiling = e[e['result'].notna()]
-    c = e_compiling['changed_lines']
-    c = c[c != 0]
-    with open(outfile, 'w') as f:
-        print("Statistics about checked commits", file=f)
-        print(file=f)
+    ws = e[e['application'] == 'roll-forward-atomic-ws']
+    cc = e[e['application'] == 'roll-forward-atomic']
+    assert ws.shape == cc.shape
+    ws_compiling = ws[ws['result'].notna()]
+    wsc = ws_compiling['changed_lines']
+    wsc = wsc[wsc != 0]
+    cc_compiling = cc[cc['result'].notna()]
+    ccc = cc_compiling['changed_lines']
+    with open(outfile, 'w') as outfile:
+        print("Statistics about checked commits\n", file=outfile)
         frame = pd.Series({
-            'Commits Checked': e.shape[0],
-            'Commits Compiling': e_compiling.shape[0],
-            'Avg Lines Touched': e_compiling['seen_locs'].mean(),
+            'Commits Checked': cc.shape[0],
+            'Commits Compiling': ws_compiling.shape[0],
+            'Avg Lines Touched Across All Crates': cc_compiling['seen_locs'].mean(),
+            'Avg Lines Touched in the Workspace': ws_compiling['seen_locs'].mean(),
         })
-        frame.to_string(buf=f)
-        print(file=f)
-        print("Statistics for commits that change code touched by Paralegal", file=f)
-        print(file=f)
-        c.aggregate(['count', 'min', 'max', 'mean']).rename({
+        frame.to_string(buf=outfile)
+        print(file=outfile)
+        print("Statistics for commits that change code touched by Paralegal\n", file=outfile)
+        frame2 = pd.DataFrame({
+            'LoC Including Deps': ccc,
+            'LoC Workspace': wsc,
+        })
+        frame2.aggregate(['count', 'min', 'max', 'mean']).rename({
             'count': 'Commits changing lines',
             'min': 'Smallest non-zero change',
             'max': 'Largest #LoC changed in single commit',
             'mean': 'Mean #Loc changed per non-zero change commit',
-        }).to_string(buf=f)
+        }).to_string(buf=outfile)
+
 
 plots = [
     ide_ci_plot,
