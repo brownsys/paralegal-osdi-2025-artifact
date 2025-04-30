@@ -6,3 +6,4 @@
 **/build/
 **/_codeql_build_dir/
 /codeql-experimentation/results
+Dockerfile
