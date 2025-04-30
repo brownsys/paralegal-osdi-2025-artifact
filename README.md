@@ -104,15 +104,15 @@ $ python3 -m pip install -r plotting/requirements.txt
 ```
 
 If you wish to reproduce our CodeQL results you must install CodeQL too. The
-results in our paper were obtained with 2.19.3. Download the binaries for your
+results in our paper were obtained with 2.19.3. Download the bundle for your
 platform from the
 [releases
-page](https://github.com/github/codeql-cli-binaries/releases/tag/v2.19.3) and
-unzip the archive. You will need this path later to run the evaluator.
+page](https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.19.3) and
+unzip the archive.
 
 ```bash
-wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3/codeql-linux64.zip
-unxip codeql-linux64.zip
+wget https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.19.3/codeql-bundle-linux64.tar.gz
+tar -xf codeql-bundle-linux64.tar.gz
 ```
 
 You need to ensure the executable can be found by our comparison benchmark
@@ -206,14 +206,14 @@ this run took about 10min.
 ```bash
 $ cd codeql-experimentation
 $ (cd runner && cargo build --release)
-$ runner/target/release/runner --keep-temporaries eval-config.toml
+$ runner/target/release/runner --keep-intermediates eval-config.toml
 ```
 
 If you did not add the `codeql` command to your `PATH`, you should invoke the
 runner as 
 
 ```bash
-$ runner/target/release/runner --keep-temporaries eval-config.toml --codeql-path /path/to/codeql/executable
+$ runner/target/release/runner --keep-intermediates eval-config.toml --codeql-path /path/to/codeql/executable
 ```
 
 The runner will fail if any build or codeql analysis fails. It will also issue
