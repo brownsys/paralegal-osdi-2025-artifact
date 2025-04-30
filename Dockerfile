@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update
 RUN apt-get install -y apt-utils
-RUN apt-get install -y build-essential curl clang libclang-dev liblz4-dev libssl-dev cmake python3 python3-pip wget unzip pkg-config
+RUN apt-get install -y build-essential curl clang libclang-dev liblz4-dev libssl-dev cmake python3 python3-pip wget unzip pkg-config git
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain 1.75 -y
 ENV PATH="/root/.cargo/bin:$PATH"
 RUN rustup toolchain install nightly-2023-08-25 -c rustc-dev -c rust-src -c rustfmt -c clippy
@@ -17,6 +17,8 @@ RUN wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3
     && tar -xf codeql-bundle-linux64.tar.gz \
     && rm codeql-bundle-linux64.tar.gz
 ENV PATH="$PATH:/home/aec/codeql"
+
+RUN git clone https://github.com/atomicdata-dev/atomic-server 
 
 RUN mkdir artifact
 WORKDIR artifact
