@@ -18,6 +18,8 @@ If you are receiving this artifact as a docker container you'll likely want to
 skip directly to [Step by step for reproducing
 results](#step-by-step-for-reproducing-results).
 
+If you want to learn more about the organization of this repository see [Organization](#organization).
+
 ## Platform compatibility
 
 The **analyzer** has been tested on Ubuntu and OSX, but should in theory run on any
@@ -56,8 +58,8 @@ $ (cd paralegal && rustc --version)
 rustc 1.74.0-nightly (58eefc33a 2023-08-24)
 ```
 
-You will also require python 3 to plot the graphs. Please follow the installation
-instruction for your platform.
+You will also require python 3 to plot the graphs. Please follow the [installation
+instruction for your platform](https://www.python.org/downloads/).
 
 To install the dependencies for the plotting script use
 
@@ -70,9 +72,7 @@ results in our paper were obtained with 2.19.3. Download the binaries for your
 platform from the
 [releases
 page](https://github.com/github/codeql-cli-binaries/releases/tag/v2.19.3) and
-unzip the archive. You will need this path later to run the evaluator. One way
-to store it is to set an alias. For example on linux you may consider this set
-of instructions:
+unzip the archive. You will need this path later to run the evaluator.
 
 ```bash
 wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3/codeql-linux64.zip
@@ -80,8 +80,8 @@ unxip codeql-linux64.zip
 ```
 
 You need to ensure the executable can be found by our comparison benchmark
-runner. You may add it to your path with or provide it to the runner via the
-`--codeql-command` flag.
+runner. You may add it to your path (command below) or provide the path directly
+to the runner via the `--codeql-command` flag.
 
 ```bash
 export PATH="$PATH:$(realpath codeql)"
@@ -131,7 +131,8 @@ $ (cd paralegal-bench && cargo run --bin griswold --release -- bconf/bench-confi
 
 This will take about 90 minutes.
 
-Some notes on this configuration (`bconf/bench-config.toml`):
+Performance benchmarks are controlled by the configuration (e.g.
+`bconf/bench-config.toml`). Some notes:
 
 - In the paper we run these experiments with 5 repetitions to ensure stable
   results. This option is commented out in the configuration provided to you, as
@@ -144,7 +145,10 @@ Some notes on this configuration (`bconf/bench-config.toml`):
   `timed-out.toml` configuration you can use to *just* check the experiment
   runs that time out.
 
-Once the benchmarks have finished, generate the plots by running
+The output from the benchmark is written to `paralegal-bench/results`. For more
+information on the format see [Performance Benchmarker Output
+Format](#performance-benchmarker-output-format). Once the benchmarks have
+finished, generate the plots by running
 
 ```bash
 $ plotting/plot.py
@@ -176,68 +180,6 @@ The runner will fail if any build or codeql analysis fails. It will also issue
 an "error" log message for every policy where the output diverges from the
 expected output with information which policy failed, what the expected output
 was and what the actual output was.
-
-## Organization
-
-**Make sure you've fetched the submodules by cloning with `--recursive` or
-running `git submodule init && git submodule update`**
-
-This artifact is organized as follows:
-
-- The `paralegal` directory contains the source code for the analyzer. The most
-  important subdirectories are
-
-  - `crates/paralegal-flow` is the PDG constructor. It wraps around `cargo` and
-    `rustc`, functioning as a compiler plugin. It can be installed via `cargo
-    install --locked --path crates/paralegal-flow` and run via `cargo
-    paralegal-flow` in the directory of a target rust project to analyze. It
-    also accepts a `--help` flag to show command line configuration options.
-  - `crates/paralegal-policy` contains the low-level Rust API for policy
-    enforcement, which is used by the compiler (`paralegal-compiler`).
-  - `crates/paralegal` is the annotation library that a target rust project
-    should link against to add inline annotations, e.g. `#[paralegal::analyze]`
-    or `#[paralegal::marker(...)]`.
-
-  For more documentation on the analyzer see the [online
-  documentation](https://brownsys.github.io/paralegal).
-
-- The `paralegal-bench` directory contains the performance benchmark coordinator
-  and source code for our use cases.
-
-  - `bconf` contains configuration files for various benchmark runs. The most
-    important one being `bench-config.toml`, which is the one used to produce
-    all results we present in the paper.
-  - `griswold` is the benchmark driver/coordinator. You can run it via `cargo
-    run --bin griswold`. It takes as input a run configuration (for example
-    `bconf/bench-config.toml`). It writes outputs to the `results` directory.
-    See the `--help` option of the [Benchmarker output
-    Format](#benchmarker-output-format) section for more details on the
-    structure of results.
-  - `case-studies` contains a copy of the source code for our case studies.
-    These corresponds to the commits listed in [Case study
-    versions](#case-study-versions) with some small changes applied as explained
-    in the paper appendix.
-  - `paralegal-compiler` contains the source code for the compiler of the
-    high-level policy language. Can be run via `cargo run -p
-    paralegal-compiler --release`.
-
-    - The policies used in the paper and corresponding to our case studies are
-      in the `policies` subdirectory.
-
-- The `plotting` directory contains python scripts to plot the graphs. Install
-  the dependencies with `python3 -m pip install -r plotting/requirements.txt`.
-
-- The `codeql-experimentation` directory contains our C++ translations of
-  applications and the CodeQL translations of our policies.
-
-  - `cpp` contains C++ source code for examples we tried with CodeQL, including
-    the source for our application translations.
-  - `runner` coordination program for replicating our codeql findings
-  - `eval-config.toml` an index file for which policies should be run on which
-    application. Input to the `runner`.
-  - `real-world-policies` the ql source code for our policy translations
-  - `expected` CodeQL output as we observed it
-  - `policy-coding` raw data of how we labeled sections in the CodeQL policies
 
 ## Plots
 
@@ -437,6 +379,69 @@ And now compare that output to `expected/plume-data-deletion.ql`.
   finding the storage calls for user records. The CodeQL output show show at
   least one such call but doesn't. This means a full policy would be vacuously
   succeeding (false negative).
+
+## Organization
+
+**Make sure you've fetched the submodules by cloning with `--recursive` or
+running `git submodule init && git submodule update`**
+
+This artifact is organized as follows:
+
+- The `paralegal` directory contains the source code for the analyzer. The most
+  important subdirectories are
+
+  - `crates/paralegal-flow` is the PDG constructor. It wraps around `cargo` and
+    `rustc`, functioning as a compiler plugin. It can be installed via `cargo
+    install --locked --path crates/paralegal-flow` and run via `cargo
+    paralegal-flow` in the directory of a target rust project to analyze. It
+    also accepts a `--help` flag to show command line configuration options.
+  - `crates/paralegal-policy` contains the low-level Rust API for policy
+    enforcement, which is used by the compiler (`paralegal-compiler`).
+  - `crates/paralegal` is the annotation library that a target rust project
+    should link against to add inline annotations, e.g. `#[paralegal::analyze]`
+    or `#[paralegal::marker(...)]`.
+
+  For more documentation on the analyzer see the [online
+  documentation](https://brownsys.github.io/paralegal).
+
+- The `paralegal-bench` directory contains the performance benchmark coordinator
+  and source code for our use cases.
+
+  - `bconf` contains configuration files for various benchmark runs. The most
+    important one being `bench-config.toml`, which is the one used to produce
+    all results we present in the paper.
+  - `griswold` is the benchmark driver/coordinator. You can run it via `cargo
+    run --bin griswold`. It takes as input a run configuration (for example
+    `bconf/bench-config.toml`). It writes outputs to the `results` directory.
+    See the `--help` option of the [Benchmarker output
+    Format](#performance-benchmarker-output-format) section for more details on the
+    structure of results.
+  - `case-studies` contains a copy of the source code for our case studies.
+    These corresponds to the commits listed in [Case study
+    versions](#case-study-versions) with some small changes applied as explained
+    in the paper appendix.
+  - `paralegal-compiler` contains the source code for the compiler of the
+    high-level policy language. Can be run via `cargo run -p
+    paralegal-compiler --release`.
+
+    - The policies used in the paper and corresponding to our case studies are
+      in the `policies` subdirectory.
+
+- The `plotting` directory contains python scripts to plot the graphs. Install
+  the dependencies with `python3 -m pip install -r plotting/requirements.txt`.
+
+- The `codeql-experimentation` directory contains our C++ translations of
+  applications and the CodeQL translations of our policies.
+
+  - `cpp` contains C++ source code for examples we tried with CodeQL, including
+    the source for our application translations.
+  - `runner` coordination program for replicating our codeql findings
+  - `eval-config.toml` an index file for which policies should be run on which
+    application. Input to the `runner`.
+  - `real-world-policies` the ql source code for our policy translations
+  - `expected` CodeQL output as we observed it
+  - `policy-coding` raw data of how we labeled sections in the CodeQL policies
+
 
 ## Performance Benchmarker Output Format
 
