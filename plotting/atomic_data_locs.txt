@@ -7,7 +7,7 @@ Avg Lines Touched in the Workspace       907.731838
 Statistics for commits that change code touched by Paralegal
 
                                               LoC Including Deps  LoC Workspace
-Commits changing lines                                935.000000      66.000000
-Smallest non-zero change                                0.000000       1.000000
+Commits changing lines                                 84.000000      66.000000
+Smallest non-zero change                                1.000000       1.000000
 Largest #LoC changed in single commit               26925.000000     732.000000
-Mean #Loc changed per non-zero change commit          104.697326      60.348485
+Mean #Loc changed per non-zero change commit         1165.380952      60.348485

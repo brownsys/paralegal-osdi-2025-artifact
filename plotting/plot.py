@@ -35,7 +35,7 @@ def main():
         "--input",
         type=str,
         default=None,
-        help="Path to the input CSV file containing the results.",
+        help="Path to the input CSV file containing the results. Defaults to the one with the latest timestamp in the paralegal-bench/results directory.",
     )
     parser.add_argument(
         "-e",
@@ -233,6 +233,7 @@ def atomic_data_locs(outfile):
     wsc = wsc[wsc != 0]
     cc_compiling = cc[cc['result'].notna()]
     ccc = cc_compiling['changed_lines']
+    ccc = ccc[ccc != 0]
     with open(outfile, 'w') as outfile:
         print("Statistics about checked commits\n", file=outfile)
         frame = pd.Series({

@@ -59,6 +59,12 @@ rustc 1.74.0-nightly (58eefc33a 2023-08-24)
 You will also require python 3 to plot the graphs. Please follow the installation
 instruction for your platform.
 
+To install the dependencies for the plotting script use
+
+```bash
+$ python3 -m pip install -r plotting/requirements.txt
+```
+
 If you wish to reproduce our CodeQL results you must install CodeQL too. The
 results in our paper were obtained with 2.19.3. Download the binaries for your
 platform from the
@@ -138,9 +144,17 @@ Some notes on this configuration (`bconf/bench-config.toml`):
   `timed-out.toml` configuration you can use to *just* check the experiment
   runs that time out.
 
-Once the benchmarks have finished TODO plot
+Once the benchmarks have finished, generate the plots by running
 
-To check our CodeQL comparison you run a similar coordination program. For us
+```bash
+$ plotting/plot.py
+```
+
+You will find the created plots in the `plotting` directory. For explanations of
+each graph/table, see [Plots](#plots). The plotting script also supports a
+number of command line parameters. Run it with `--help` to learn more.
+
+To check our CodeQL comparison you run a similar coordination program to `griswold`. For us
 this run took about 10min.
 
 ```bash
@@ -246,6 +260,121 @@ the format `<timestamp>-<purpose>` with the following purposes:
     tells you which run each row belongs to. 
   - `sys.toml`: information about the system that this experiment was run on.
   - `bench-config.toml`: a copy of the configuration that was input to this run
+
+## Plots
+
+**General Note:** Since the acceptance of the paper we've made improvements to
+Paralegal which make PDG construction faster and allow it to now analyze all
+dependencies of a crate. Before we would restrict the set of crates analyzed for
+every application and approximate the rest. As a result we're making some
+changes to the evaluation setup, using the sounder "all crates" configuration
+in many experiments. The changes to each plot/claim are explained in this
+section. We generally provide the new plots we want to put in the paper as well
+as the old versions or analogous results.
+
+### ide_ci_plot(.png)
+
+![Workspace vs all crates plot](plotting/ide_ci_plot.png)
+
+The right and side of this graph is an updated version of Figure 9 in the paper.
+The left hand side is new and represents the mentioned "all crates"
+configuration. We will change the description in the paper to explain that we
+expect this "all crates" setup to be the one user's run in CI, where soundness
+is the chief concern and slightly longer runtimes are acceptable. The "Workspace
+Crates Only" we believe is more suited for interactive use, especially when only
+run on single controllers (see [per_controller_plot](#per_controller_plotpng)).
+
+### per_controller_plot(.png)
+
+![Per Controller Runtime Plot](plotting/per_controller_plot.png)
+
+This plot is an updated version of Figure 10 in the paper. Runtimes have gotten
+a bit lower, due to optimizations. This uses the "Workspace Crates Only" setup
+and shows combined runtime (PDG generation and policy checking).
+
+### k_depth_plot(.png)
+
+![Adaptive Depth Impact Plot](plotting/k_depth_plot.png)
+
+This plot is new and set to replace Figure 11 in the paper. The purpose of this
+plot remains the same. It quantifies the impact of using our marker-guided
+"adaptive inlining" optimization. The graph compares total runtime (PDG
+generation + policy check) for Paralegal when using "adaptive inlining" vs a
+fixed-k limit. Both approaches limit the depth of function call stacks that will
+be represented in the PDG. Both cases use the "all crates" setup.
+
+Each application uses a different fixed k. The idea is to pick a k, that
+creates a graph with the same fidelity as the adaptive approach, yet one that is
+as small as possible, so that we observe the best possible performance for
+fixed-k. To facilitate this we pick, for each application, the maximum k that
+the "adaptive" setup explores. This guarantees both that the fidelity of "fixed-k"
+is at least as good as for "adaptive" *and* because of how "adaptive" chooses
+whether to continue exploring a call tree it is also guaranteed that this k is
+the smallest possible sound k.
+
+One might also suggest using a k = infinity, but as you can infer from the
+timeouts just in this case, most of those will not terminate. Hence we pick a
+smaller (optimal) k. We acknowledge that the "fixed-k" setup is unrealistic,
+since it relies on an oracle to pick the correct k. The argument is that even in
+this (idealistic) case, "adaptive inlining" *still* offers substantial
+improvements.
+
+Note on the Plume result: We run both a the buggy and fixed version of the app.
+The buggy one finished with the time shown, the fixed one time out, hence both
+the bar and the timeout marker.
+
+### old_adaptive_plot(.png)
+
+![Prior Adaptive Depth plot](plotting/old_adaptive_plot.png)
+
+This plot is a recreation of Figure 11 from the paper with the new
+numbers/optimizations. This plot is provided for transparency, it will be
+removed from the paper.
+
+The setup is similar to [k_depth_plot](#k_depth_plotpng), however here k =
+infinity, but we only run on the "Workspace Crates", massively reducing the code
+needing to be analyzed at the cost of soundness.
+
+This graph shows that "Adaptive Inlining" is still generally faster, though the
+gains are less pronounced.
+
+### dependency_times(.txt)
+
+[Table](plotting/dependency_times.txt)
+
+The graphs shown so far do not include the time needed to compile the
+dependencies before running the PDG generation. This is only needed once (for
+each dependency change). In the paper we plan to add a sentence to 7.4 about the
+overhead Paralegal introduces to this dependency compilation, because we persist
+the MIR bodies for each dependency in addition to the compilation. The claim
+will be similar to:
+
+> As a rustc plugin Paralegal must compile the dependencies first before it can
+> generate a PDG. In addition Paralegal dumps the MIR code for each function in
+> the dependencies in top of compilation. This creates at most a 4% overhead
+> over just compiling the dependencies.
+
+The substantiating column in the table is "Dump Time % Share" which is
+calculated as dividing "Dep. Comp. CPU Time" (CPU time spent on compiling
+dependencies) by "Dep. Dump CPU Time" (CPU time spent persisting MIR).
+
+"Wall Clock Dependency Time" is provided for convenience, showing actual time
+used, when dependency compilation is parallelized.
+
+### atomic_data_locs(.txt)
+
+[Table](plotting/dependency_times.txt)
+
+This table shows the calculated numbers we quote in section 7.3. In the second
+table we quote the numbers from the "LoC Workspace" column, as this represents
+the lines of code that could cause a marker change. We plan to add the "Mean
+#LoC changed" from "LoC Including Deps" statistic to the paper with something
+like
+
+> Within the 937 functional commits, 84 commits change one or more code lines
+> touched by the analysis (1165 LoC changed on average). Of those 66 commits
+> modify lines in the workspace (60 lines change on average) and could cause an
+> adjustment to the markers.
 
 ## CodeQL Comparison
 
