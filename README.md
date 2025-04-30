@@ -15,7 +15,7 @@ If you are receiving this artifact as a docker container (for example from
 [Zenodo](https://doi.org/10.5281/zenodo.15313526)) you should start with [Running the Docker
 Image](#running-the-docker-image).
 
-If you are intending to use [this
+If you are instead intending to use [this
 repository](https://github.com/brownsys/paralegal-osdi-2025-artifact) from
 source, go to the [Setup and Installation](#setup-and-installation) section
 **before cloning the repo**.
