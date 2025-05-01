@@ -69,7 +69,7 @@ $ git clone git@github.com:brownsys/paralegal-osdi-2025-artifact --recursive
 ```
 
 You should have [`rustup`](https://rustup.rs/) installed on your system, to
-handle the Rust toolchain management. This is necessary because the analyzer
+handle Rust toolchain management. This is necessary because the analyzer
 builds against a specific Rust nightly version (see
 `paralegal/rust-toolchain.toml`). For Unix you can run 
 
@@ -173,8 +173,8 @@ Performance benchmarks are controlled by the configuration (e.g.
 - In the paper we run these experiments with 5 repetitions to ensure stable
   results. This option is commented out in the configuration provided to you, as
   the numbers tend to be similar even for just one run and this makes the
-  overall runtime almost 5 times lower. If you so desire, you may comment the
-  option back in at the top of the file.
+  overall runtime almost 5 times lower. If you so desire, you may uncomment the
+  option at the top of the file.
 - In the configuration the experiments that are known to time out in 15min are
   commented out for your convenience. If you would like to check that they do
   feel free to comment them back in *or* there is also a separate
@@ -224,20 +224,30 @@ was and what the actual output was.
 ## Plots
 
 **General Note:** Since the acceptance of the paper we've made improvements to
-Paralegal which make PDG construction faster and allow it to now analyze all
-dependencies of a crate. Before we would restrict the set of crates analyzed for
-every application and approximate the rest. As a result we're making some
-changes to the evaluation setup, using the sounder "all crates" configuration
-in many experiments. The changes to each plot/claim are explained in this
-section. We generally provide the new plots we want to put in the paper as well
-as the old versions or analogous results.
+Paralegal that make PDG construction substantially faster. As a result,
+Paralegal will now by default analyze *all dependencies* of a crate, while for the
+submission version, we restricted the set of crates analyzed for every
+application and approximate the rest using Paralegal's modular approximation. As
+a result of these improvements, we are changing the evaluation setup for the
+final paper to (a) illustrate the cost of analyzing only the crates in the
+workspace vs. all crates; (b) use the "all crates" configuration, which has
+better soundness as it analyzes more code, in many experiments; and (c)
+illustrate that Paralegal's adaptive inlining optimization is critical for
+performance when running over all dependencies. 
+
+This section explains the changes we made to each plot or claim made in the
+paper, and how to check our results. We provide the new plots that we will to
+put in the final paper, as well as the old versions of the plots or a way to
+produce analogous results. Some of the numbers have changed since the submission
+version of Paralegal (always for the better, since PDG construction is now
+faster); we note and explain this where relevant.
 
 ### ide_ci_plot(.png)
 
 ![Workspace vs all crates plot](plotting/reference/ide_ci_plot.png)
 
-The right and side of this graph is an updated version of **Figure 9** in the paper.
-The left hand side is new and represents the mentioned "all crates"
+The right-hand side of this graph is an updated version of **Figure 9** in the paper.
+The left-hand side is new and represents the mentioned "all crates"
 configuration. We will change the description in the paper to explain that we
 expect this "all crates" setup to be the one user's run in CI, where soundness
 is the chief concern and slightly longer runtimes are acceptable. The "Workspace
@@ -263,21 +273,20 @@ generation + policy check) for Paralegal when using "adaptive inlining" vs a
 fixed-k limit. Both approaches limit the depth of function call stacks that will
 be represented in the PDG. Both cases use the "all crates" setup.
 
-Each application uses a different fixed k. The idea is to pick a k, that
-creates a graph with the same fidelity as the adaptive approach, yet one that is
-as small as possible, so that we observe the best possible performance for
-fixed-k. To facilitate this we pick, for each application, the maximum k that
-the "adaptive" setup explores. This guarantees both that the fidelity of "fixed-k"
-is at least as good as for "adaptive" *and* because of how "adaptive" chooses
-whether to continue exploring a call tree it is also guaranteed that this k is
-the smallest possible sound k.
+Each application uses a different, optimal fixed k. This corresponds to having
+an oracle which selects a k, such that we the graph is minimal but includes all
+policy-relevant code. This ensures both soundness, low false-positives and the
+best possible performance achievable with a fixed-k analyzer. In general a
+fixed-k approach does not have such precise oracles. It is intended as a the
+best-faith representation of a fixed-k approach and to show that even in this
+idealistic case, "adaptive inlining" *still* offers substantial improvements.
+
+We concretely use our adaptive approximation setup as the oracle, picking for
+each application the largest k to which it explored the graph.
 
 One might also suggest using a k = infinity, but as you can infer from the
 timeouts just in this case, most of those will not terminate. Hence we pick a
-smaller (optimal) k. We acknowledge that the "fixed-k" setup is unrealistic,
-since it relies on an oracle to pick the correct k. The argument is that even in
-this (idealistic) case, "adaptive inlining" *still* offers substantial
-improvements.
+smaller, optimal k.
 
 Note on the Plume result: We run both a the buggy and fixed version of the app.
 The buggy one finished with the time shown, the fixed one time out, hence both
@@ -296,7 +305,10 @@ infinity, but we only run on the "Workspace Crates", massively reducing the code
 needing to be analyzed at the cost of soundness.
 
 This graph shows that "Adaptive Inlining" is still generally faster, though the
-gains are less pronounced.
+gains are less pronounced as we made the part of the system for which adaptive
+inlining saves work much more efficient. However, as the
+[k_depth_plot](#k_depth_plotpng) shows, adaptive inlining is crucial when
+analyzing across all dependencies.
 
 ### dependency_times(.txt)
 
@@ -311,7 +323,7 @@ compilation. The claim will be similar to:
 
 > As a rustc plugin Paralegal must compile the dependencies first before it can
 > generate a PDG. In addition Paralegal dumps the MIR code for each function in
-> the dependencies in top of compilation. This creates at most a 4% overhead
+> the dependencies on top of compilation. This creates at most a 4% overhead
 > over just compiling the dependencies.
 
 The substantiating column in the table is "Dump Time % Share" which is
@@ -375,7 +387,7 @@ And now compare that output to `expected/plume-data-deletion.ql`.
 - **mCaptcha Limited Collection Policy**: The policy checks for the presence of
   a function call that authorizes the collection of data and a control flow
   influence of its return value on the collection. If the CodeQL output contains
-  that function call, then this policy recognized that the code does not contain
+  that function call, then this policy recognizes that the code does not contain
   a violation.
 - **mCaptcha Deletion Policy**: The output is a tuple showing where the private
   data is retrieved in the delete controller and where the delete method is
@@ -415,7 +427,7 @@ And now compare that output to `expected/plume-data-deletion.ql`.
 - **Freedit Storage Policy**: This is an auxiliary policy to the expiration
   check that asserts that user records must be stored with a timestamp. The file
   being run here is a policy fragment that tests the premise of the policy,
-  finding the storage calls for user records. The CodeQL output show show at
+  finding the storage calls for user records. The CodeQL output should show at
   least one such call but doesn't. This means a full policy would be vacuously
   succeeding (false negative).
 
@@ -424,7 +436,7 @@ And now compare that output to `expected/plume-data-deletion.ql`.
 **Make sure you've fetched the submodules by cloning with `--recursive` or
 run `git submodule update --init --recursive`**
 
-This artifact is organized as follows:
+The artifact is organized as follows:
 
 - The `paralegal` directory contains the source code for the analyzer. The most
   important subdirectories are
@@ -457,7 +469,7 @@ This artifact is organized as follows:
     structure of results.
   - `case-studies` contains a copy of the source code for our case studies.
     These corresponds to the commits listed in [Case study
-    versions](#case-study-versions) with some small changes applied as explained
+    versions](#case-study-versions), with some small changes applied, as explained
     in the paper appendix.
   - `paralegal-compiler` contains the source code for the compiler of the
     high-level policy language. Can be run via `cargo run -p

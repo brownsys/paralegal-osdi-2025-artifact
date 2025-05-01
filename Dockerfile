@@ -13,7 +13,7 @@ RUN rustup toolchain install nightly-2023-08-25 -c rustc-dev -c rust-src -c rust
 RUN mkdir home/aec
 WORKDIR home/aec
 
-RUN wget https://github.com/github/codeql-cli-binaries/releases/download/v2.19.3/codeql-linux64.zip\ 
+RUN wget https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.19.3/codeql-bundle-linux64.tar.gz\
     && tar -xf codeql-bundle-linux64.tar.gz \
     && rm codeql-bundle-linux64.tar.gz
 ENV PATH="$PATH:/home/aec/codeql"
