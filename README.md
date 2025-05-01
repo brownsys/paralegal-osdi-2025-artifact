@@ -37,7 +37,7 @@ You will require bzip2 and `docker` on the command line. This assumes a file
 name of `paralegal-osdi25-docker.tar.bz2`
 
 ```bash
-$ bunzip2 paralegal-osdi25-docker.tar.bz2 | docker image load
+$ bunzip2 -kc paralegal-osdi25-docker.tar.bz2 | docker image load
 ```
 
 Verify it has been loaded 
