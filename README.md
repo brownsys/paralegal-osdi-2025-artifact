@@ -44,7 +44,8 @@ Verify it has been loaded
 
 ```bash
 $ docker image list
-TODO
+REPOSITORY                          TAG               IMAGE ID       CREATED         SIZE
+paralegal                           osdi25-artifact   627f3552e43f   2 hours ago     11.5GB
 ```
 
 Then you can start and connect to the image with the following command. Note the
