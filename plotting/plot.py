@@ -231,7 +231,7 @@ def dependency_times(outfile):
 
 @plot(output_ext=".txt")
 def atomic_data_locs(outfile):
-    e = all_results[all_results['experiment'].isin(['atomic-roll-forward'])].copy()
+    e = all_results[all_results['experiment'].isin(['atomic-roll-forward', 'atomic-data-roll-forward-ws'])].copy()
     ws = e[e['application'] == 'roll-forward-atomic-ws']
     cc = e[e['application'] == 'roll-forward-atomic']
     assert ws.shape == cc.shape
