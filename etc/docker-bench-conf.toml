@@ -9,7 +9,7 @@ pdg-timeout = "15min"
 #repeats = 5
 
 #####################################################################
-# Defition of use case applications
+# Definition of use case applications
 #
 # Starting with the base configurations for the use cases used in most
 # experiment.
@@ -594,28 +594,28 @@ cnl = true
 # Second run of roll forward to collect numbers for lines changed in just the
 # local crate
 
-[[experiment.atomic-roll-forward]]
+[[experiment.atomic-roll-forward-ws]]
 mode = "roll-forward"
 application = "atomic-data"
 app-config-override = "roll-forward-atomic-ws"
 repeats = 1
 cnl = true
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
 expectation = "pass"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
 repeats = 1
 cnl = true
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
 expectation = "pass"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
 repeats = 1
 cnl = true
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
 expectation = "pass"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
@@ -626,11 +626,11 @@ cnl = true
 # regular rustc, this is not a Paralegal issue). See
 # https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
 # for more information
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2"
 repeats = 1
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "1b9aee9cbac33b3636ebf6153f4d866b4c310fe4"
 expectation = "pass"
 repeats = 1
@@ -641,25 +641,25 @@ cnl = true
 # issue. See
 # https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
 # for more information
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "83f8f4f411b8a502f9e122a470629ab15ce29adc"
 repeats = 1
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 repeats = 1
 expectation = "pass"
 cnl = true
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 repeats = 1
 expectation = "pass"
 cnl = true
 
-[[experiment.atomic-roll-forward.cutoff]]
+[[experiment.atomic-roll-forward-ws.cutoff]]
 commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 repeats = 1
