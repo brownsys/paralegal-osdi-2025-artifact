@@ -28,7 +28,6 @@ def plot(output_ext=None):
     return functools.partial(PlotDescriptor, output_ext)
 
 def main():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     global args, results_dir, all_results, results, controller_stats
     parser = argparse.ArgumentParser(description="Plotting script for the results of the experiments.")
     parser.add_argument(
@@ -57,6 +56,10 @@ def main():
     )
     args = parser.parse_args()
 
+    output_dir = args.output if args.output is not None else os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.abspath(output_dir)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     if args.input is None:
         results_dir = "../paralegal-bench/results"
         subdirs = [
@@ -70,7 +73,6 @@ def main():
         latest_subdir = max(subdirs, key=lambda d: datetime.strptime(d.removesuffix("-run"), "%Y-%m-%dT%H-%M-%S"))
         args.input = os.path.join(results_dir, latest_subdir)
 
-    output_dir = args.output if args.output is not None else os.path.dirname(os.path.abspath(__file__))
     results_dir = args.input
     all_results = pd.read_csv(results_dir + "/results.csv")
     controller_stats = pd.read_csv(results_dir + "/controllers.csv")
