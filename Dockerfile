@@ -25,7 +25,6 @@ WORKDIR artifact
 ADD plotting/requirements.txt plotting/requirements.txt
 RUN python3 -m pip install -r plotting/requirements.txt
 ADD . .
-RUN cd paralegal-bench/roll-forward && git clone https://github.com/atomicdata-dev/atomic-server atomic-server-clone
 RUN cp etc/docker-bench-conf.toml paralegal-bench/bconf/bench-config.toml
 
 # Download the dependencies. There's no native way to do *just* that so we use check

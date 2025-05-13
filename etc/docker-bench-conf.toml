@@ -72,7 +72,7 @@ external-annotations = "external-annotations.toml"
 #
 # If the directory does not exist, the runner will to auto-clone. The parent
 # directory must exist however
-source-dir = "roll-forward/atomic-server-clone"
+source-dir = "../../atomic-server"
 clone = "https://github.com/atomicdata-dev/atomic-server"
 flow-args = [
     "--target",
@@ -92,7 +92,7 @@ RUSTUP_TOOLCHAIN = "1.75"
 #
 # If the directory does not exist, the runner will to auto-clone. The parent
 # directory must exist however
-source-dir = "../clones/atomic-server"
+source-dir = "../../atomic-server"
 clone = "https://github.com/atomicdata-dev/atomic-server"
 flow-args = [
     "--target",
