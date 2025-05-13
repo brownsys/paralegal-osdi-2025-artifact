@@ -40,7 +40,7 @@ name of `paralegal-osdi25-docker.tar.bz2`
 $ bunzip2 -kc paralegal-osdi25-docker.tar.bz2 | docker image load
 ```
 
-Verify it has been loaded 
+Verify it has been loaded
 
 ```bash
 $ docker image list
@@ -72,7 +72,7 @@ $ git clone git@github.com:brownsys/paralegal-osdi-2025-artifact --recursive
 You should have [`rustup`](https://rustup.rs/) installed on your system, to
 handle Rust toolchain management. This is necessary because the analyzer
 builds against a specific Rust nightly version (see
-`paralegal/rust-toolchain.toml`). For Unix you can run 
+`paralegal/rust-toolchain.toml`). For Unix you can run
 
 ```bash
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none
@@ -90,9 +90,15 @@ $ (cd paralegal && rustc --version)
 rustc 1.74.0-nightly (58eefc33a 2023-08-24)
 ```
 
+Compiling (and analyzing) the case study applications also requires you have `git`, `pkg-config`, `libssl`, `z4` and `clang` installed. On Ubuntu you could do so with
+
+```bash
+sudo apt install clang libclang-dev liblz4-dev libssl-dev pkg-config git
+```
+
 You will also require python 3 and pip to plot the graphs. Please follow the
 [installation instruction for your platform](https://www.python.org/downloads/).
-For Ubuntu for example the command is 
+For Ubuntu for example the command is
 
 ```bash
 sudo apt install python3 python3-pip
@@ -127,7 +133,7 @@ export PATH="$PATH:$(realpath codeql)"
 In addition running CodeQL requires you have a C++ compiler like gcc or clang as
 well as cmake installed.
 
-**This next set of instructions is only if you are operating on Linux.** 
+**This next set of instructions is only if you are operating on Linux.**
 
 Retrieve the system root for the Rust toolchain, e.g. with my example output
 
@@ -138,7 +144,7 @@ Retrieve the system root for the Rust toolchain, e.g. with my example output
 
 You must edit any benchmark configuration (e.g.
 `paralegal-bench/bconf/bench-config.toml`) you run. Specifically it will have an
-entry like 
+entry like
 
 ```toml
 [app-config.hyperswitch.env]
@@ -163,7 +169,7 @@ library, so we provide the path here.
 You can run all performance benchmarks with
 
 ```bash
-$ (cd paralegal-bench && cargo run --bin griswold --release -- bconf/bench-config.toml)
+$ (cd paralegal-bench && cargo run --bin griswold --locked --release -- bconf/bench-config.toml)
 ```
 
 This will take about 90 minutes.
@@ -206,12 +212,12 @@ this run took about 10min.
 
 ```bash
 $ cd codeql-experimentation
-$ (cd runner && cargo build --release)
+$ (cd runner && cargo build --release --locked)
 $ runner/target/release/runner --keep-intermediates eval-config.toml
 ```
 
 If you did not add the `codeql` command to your `PATH`, you should invoke the
-runner as 
+runner as
 
 ```bash
 $ runner/target/release/runner --keep-intermediates eval-config.toml --codeql-path /path/to/codeql/executable
@@ -234,7 +240,7 @@ final paper to (a) illustrate the cost of analyzing only the crates in the
 workspace vs. all crates; (b) use the "all crates" configuration, which has
 better soundness as it analyzes more code, in many experiments; and (c)
 illustrate that Paralegal's adaptive inlining optimization is critical for
-performance when running over all dependencies. 
+performance when running over all dependencies.
 
 This section explains the changes we made to each plot or claim made in the
 paper, and how to check our results. We provide the new plots that we will to
@@ -401,7 +407,7 @@ And now compare that output to `expected/plume-data-deletion.ql`.
   rows, demonstrating that it works for the simple case (in the "perform"
   entrypoint) but not the async case ("perform_async") entrypoint. It also shows
   the call in line 118, because we haven't yet implemented to only check
-  function bodies reachable from the entrypoint (that one is our bad). 
+  function bodies reachable from the entrypoint (that one is our bad).
 - **Atomic Safe Writes Policy**: This policy fragment represents the premise of
   the full policy, finding a write to a specific type of data. The CodeQL output
   should show this data flow, but it doesn't. This means a full policy would be
@@ -504,18 +510,18 @@ time you call `griswold` it creates a new set of directories. They all have
 the format `<timestamp>-<purpose>` with the following purposes:
 
 - `logs`: stdout and stderr from the PDG generation (called `compile`) and
-  combined output from the policy 
-  
+  combined output from the policy
+
 - `pp`: The source code that was involved in the analysis. The lines of code
   actually visited. This is used in the roll-forward experiment
 - `run`: Everything considered result data which are the following files:
 
   - `results.csv`: incrementally written statistics and results for each run.
   - `controllers.csv`: incrementally written statistics about individual
-    controllers. 
-    
+    controllers.
+
     Multiple such statistics are written for a single run. The `run_id` field
-    tells you which run each row belongs to. 
+    tells you which run each row belongs to.
   - `sys.toml`: information about the system that this experiment was run on.
   - `bench-config.toml`: a copy of the configuration that was input to this run
 
