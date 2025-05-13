@@ -18,21 +18,19 @@ RUN wget https://github.com/github/codeql-action/releases/download/codeql-bundle
     && rm codeql-bundle-linux64.tar.gz
 ENV PATH="$PATH:/home/aec/codeql"
 
-RUN git clone https://github.com/atomicdata-dev/atomic-server 
+RUN git clone https://github.com/atomicdata-dev/atomic-server
 
 RUN mkdir artifact
 WORKDIR artifact
 ADD plotting/requirements.txt plotting/requirements.txt
 RUN python3 -m pip install -r plotting/requirements.txt
 ADD . .
+RUN cd paralegal-bench/roll-forward && git clone https://github.com/atomicdata-dev/atomic-server atomic-server-clone
 RUN cp etc/docker-bench-conf.toml paralegal-bench/bconf/bench-config.toml
 
-# Download the dependencies. There's no native way to do *just* that so we use check 
+# Download the dependencies. There's no native way to do *just* that so we use check
 # instead and throw away any potential build artifacts
 RUN cd codeql-experimentation/runner && cargo check --locked && cargo clean
 RUN cd paralegal-bench && cargo check --locked && cargo clean
 RUN cd paralegal && cargo check --locked && cargo clean
 RUN for i in $(ls paralegal-bench/case-studies/); do (cd "paralegal-bench/case-studies/$i" && cargo +nightly-2023-08-25 check && cargo +nightly-2023-08-25 clean); done
-
-
-
