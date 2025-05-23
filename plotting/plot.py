@@ -70,7 +70,7 @@ def main():
         if not subdirs:
             raise FileNotFoundError("No subdirectories with the expected format found in the results directory.")
 
-        latest_subdir = max(subdirs, key=lambda d: datetime.strptime(d.removesuffix("-run"), "%Y-%m-%dT%H-%M-%S"))
+        latest_subdir = max(subdirs, key=lambda d: datetime.strptime(d.rsplit("-run", 1)[0], "%Y-%m-%dT%H-%M-%S"))
         args.input = os.path.join(results_dir, latest_subdir)
 
     results_dir = args.input
@@ -116,7 +116,7 @@ def ide_ci_plot(outfile):
     plot2 = e[e['experiment'] == 'ws']\
         .groupby('application')\
         [metrics].mean()\
-        .rename(index= lambda x: x.removesuffix("-ws"))\
+        .rename(index= lambda x: x.rsplit("-ws", 1)[0])\
         .rename(index=utils.rename, columns=utils.rename)\
         .plot.bar(ax=ax2, stacked=True)
     plot2.set_title("Workspace Crates Only")
