@@ -12,6 +12,14 @@ from datetime import datetime
 
 timings = ['dep_time', 'serialization_time', 'rustc_time', 'dump_time', 'policy_time', 'last_self_time', 'analyzer_time', 'deserialization_time', 'traversal_time']
 
+def removesuffix(s, suffix):
+    start = s[:-len(suffix)] 
+    end = s[-len(suffix):]
+
+    if end == suffix:
+        return start
+    else:
+        return s
 
 class PlotDescriptor:
     def __init__(self, output_ext, func):
@@ -64,13 +72,13 @@ def main():
         results_dir = "../paralegal-bench/results"
         subdirs = [
             d for d in os.listdir(results_dir)
-            if os.path.isdir(os.path.join(results_dir, d)) and "-run" in d
+            if os.path.isdir(os.path.join(results_dir, d)) and d.endswith("-run")
         ]
 
         if not subdirs:
             raise FileNotFoundError("No subdirectories with the expected format found in the results directory.")
 
-        latest_subdir = max(subdirs, key=lambda d: datetime.strptime(d.rsplit("-run", 1)[0], "%Y-%m-%dT%H-%M-%S"))
+        latest_subdir = max(subdirs, key=lambda d: datetime.strptime(removesuffix(d, "-run"), "%Y-%m-%dT%H-%M-%S"))
         args.input = os.path.join(results_dir, latest_subdir)
 
     results_dir = args.input
@@ -116,7 +124,7 @@ def ide_ci_plot(outfile):
     plot2 = e[e['experiment'] == 'ws']\
         .groupby('application')\
         [metrics].mean()\
-        .rename(index= lambda x: x.rsplit("-ws", 1)[0])\
+        .rename(index= lambda x: removesuffix(x, "-ws"))\
         .rename(index=utils.rename, columns=utils.rename)\
         .plot.bar(ax=ax2, stacked=True)
     plot2.set_title("Workspace Crates Only")
@@ -132,7 +140,7 @@ def per_controller_plot(outfile):
     metrics = ['ctrl_time', 'pdg_locs']
     # This combines the repeated runs
     e = e.groupby(['application', 'controller', 'package'], dropna=False)[metrics].mean()\
-        .rename(index=lambda x: x.removesuffix("-ws") if isinstance(x, str) else x)
+        .rename(index=lambda x: removesuffix(x, "-ws") if isinstance(x, str) else x)
     e = e.reset_index()
     fig, ax = plt.subplots()
     apps = e['application'].unique()
@@ -207,7 +215,7 @@ def old_adaptive_plot(outfile):
 
     series = e.loc['ws'] / e.loc['adaptive-depth']
     plot = series[['total_time']]\
-        .rename(index= lambda x: x.removesuffix("-ws"))\
+        .rename(index= lambda x: removesuffix(x, "-ws"))\
         .rename(index=utils.rename, columns=utils.rename)\
         .plot.bar(legend=False)
     plot.axhline(1.0, ls='--', color='k', label="no adaptive inlining")
