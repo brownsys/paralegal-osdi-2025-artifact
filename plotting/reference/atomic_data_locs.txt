@@ -1,9 +1,9 @@
 Statistics about checked commits
 
 Commits Checked                          941.000000
-Commits Compiling                        936.000000
-Avg Lines Touched Across All Crates    22410.382479
-Avg Lines Touched in the Workspace       907.731838
+Commits Compiling                        937.000000
+Avg Lines Touched Across All Crates    22408.655283
+Avg Lines Touched in the Workspace       907.398079
 Statistics for commits that change code touched by Paralegal
 
                                               LoC Including Deps  LoC Workspace
