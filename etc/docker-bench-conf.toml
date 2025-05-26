@@ -353,7 +353,7 @@ cnl = true
 #####################################################################
 
 # Contile run without the extra k-depth
-[[experiment.ws]]
+[[experiment.ws-contile-extra]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
