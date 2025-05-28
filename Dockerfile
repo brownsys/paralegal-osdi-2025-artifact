@@ -32,4 +32,8 @@ RUN cp etc/docker-bench-conf.toml paralegal-bench/bconf/bench-config.toml
 RUN cd codeql-experimentation/runner && cargo check --locked && cargo clean
 RUN cd paralegal-bench && cargo check --locked && cargo clean
 RUN cd paralegal && cargo check --locked && cargo clean
+# Some of the builds here fail because crates use conditional compilation,
+# enabling certain features on nightly only but they assume a newer nightly than
+# we provide. On stable these crates compile just fine. We don't care about
+# these failures here, we just want to download the dependencies.
 RUN for i in $(ls paralegal-bench/case-studies/); do (cd "paralegal-bench/case-studies/$i" && cargo +nightly-2023-08-25 check && cargo +nightly-2023-08-25 clean); done
