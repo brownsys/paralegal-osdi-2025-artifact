@@ -1,9 +1,10 @@
 # Artifact for the Submission of "Paralegal" to OSDI 2025
 
 Welcome to the software artifact for the 2025 submission of the static Rust
-privacy and security analyzer "Paralegal". This repository ties together the
-analyzer, benchmark suite and plotting utilities for reproducing the
-graphs shown in the paper.
+privacy and security analyzer "Paralegal"
+([preprint](https://cs.brown.edu/people/malte/pub/papers/2025-osdi-paralegal.pdf)).
+This repository ties together the analyzer, benchmark suite and plotting
+utilities for reproducing the graphs shown in the paper.
 
 **This repository is intended for artifact evaluators. If you are interested in
 using the software (or benchmarker), you should instead visit the standalone
@@ -12,8 +13,8 @@ repos for [the "Paralegal" analyzer](https://github.com/brownsys/paralegal) or
 have the latest updates.**
 
 If you are receiving this artifact as a docker container (for example from
-[Zenodo](https://doi.org/10.5281/zenodo.15313526)) you should start with [Running the Docker
-Image](#running-the-docker-image).
+[Zenodo](https://doi.org/10.5281/zenodo.15313525)) you should start with
+[Running the Docker Image](#running-the-docker-image).
 
 If you are instead intending to use [this
 repository](https://github.com/brownsys/paralegal-osdi-2025-artifact) from
@@ -30,6 +31,11 @@ Linux and possibly Windows too, though no guarantees are made.
 
 The **benchmarker** relies on UNIX features (process groups) and can only run on a
 platform that supports it e.g. Linux and OSX.
+
+The **docker image** uses x86_64 architecture and will (in its entirety) only
+work on an x86_64 architecture machine. The analyzer and benchmarker seem to run
+fine even on ARM (tested on OSX) but some of the case study dependencies do not
+compile.
 
 ## Running the Docker Image
 
@@ -60,7 +66,11 @@ docker run -ti --mount type=bind,src="$(pwd)/output",dst=/home/aec/artifact/outp
 
 ## Setup and Installation
 
-**If this artifact was provided to you as a docker container, you may skip this section.**
+**If this artifact was provided to you as a docker container, you may skip this
+section.**
+
+Installation commands for packages in this section are going to assume you are
+using Ubuntu Linux. Adjust accordingly for your OS.
 
 This artifact leverages git submodules so you must clone with `--recursive` or
 run `git submodule update --init --recursive` after cloning.
@@ -75,7 +85,7 @@ builds against a specific Rust nightly version (see
 `paralegal/rust-toolchain.toml`). For Unix you can run
 
 ```bash
-$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # Sets the environment
 $ . "$HOME/.cargo/env"
 ```
@@ -90,7 +100,7 @@ $ (cd paralegal && rustc --version)
 rustc 1.74.0-nightly (58eefc33a 2023-08-24)
 ```
 
-Compiling (and analyzing) the case study applications also requires you have `git`, `pkg-config`, `libssl`, `z4` and `clang` installed. On Ubuntu you could do so with
+Compiling (and analyzing) the case study applications also requires you have `git`, `pkg-config`, `libssl`, `z4` and `clang` installed.
 
 ```bash
 sudo apt install clang libclang-dev liblz4-dev libssl-dev pkg-config git
@@ -98,13 +108,14 @@ sudo apt install clang libclang-dev liblz4-dev libssl-dev pkg-config git
 
 You will also require python 3 and pip to plot the graphs. Please follow the
 [installation instruction for your platform](https://www.python.org/downloads/).
-For Ubuntu for example the command is
 
 ```bash
 sudo apt install python3 python3-pip
 ```
 
-To install the dependencies for the plotting script use
+To install the dependencies for the plotting script use the following command.
+You may also wish to use a [virtual python
+environment](https://docs.python.org/3/library/venv.html).
 
 ```bash
 $ python3 -m pip install -r plotting/requirements.txt
@@ -132,6 +143,10 @@ export PATH="$PATH:$(realpath codeql)"
 
 In addition running CodeQL requires you have a C++ compiler like gcc or clang as
 well as cmake installed.
+
+```bash
+sudo apt install cmake clang
+```
 
 **This next set of instructions is only if you are operating on Linux.**
 
@@ -175,18 +190,14 @@ $ (cd paralegal-bench && cargo run --bin griswold --locked --release -- bconf/be
 This will take about 90 minutes.
 
 Performance benchmarks are controlled by the configuration (e.g.
-`bconf/bench-config.toml`). Some notes:
+`bconf/bench-config.toml`).
 
-- In the paper we run these experiments with 5 repetitions to ensure stable
-  results. This option is commented out in the configuration provided to you, as
-  the numbers tend to be similar even for just one run and this makes the
-  overall runtime almost 5 times lower. If you so desire, you may uncomment the
-  option at the top of the file.
-- In the configuration the experiments that are known to time out in 15min are
-  commented out for your convenience. If you would like to check that they do
-  feel free to comment them back in *or* there is also a separate
-  `timed-out.toml` configuration you can use to *just* check the experiment
-  runs that time out.
+In the paper we run these experiments with 10 repetitions to ensure stable
+results. This option is commented out in the configuration provided to you, as
+the numbers tend to be similar even for just one run and this makes the overall
+runtime almost 10 times lower. If you so desire, you may uncomment the option at
+the top of the file.
+
 
 The output from the benchmark is written to `paralegal-bench/results`. For more
 information on the format see [Performance Benchmarker Output
@@ -227,6 +238,12 @@ The runner will fail if any build or codeql analysis fails. It will also issue
 an "error" log message for every policy where the output diverges from the
 expected output with information which policy failed, what the expected output
 was and what the actual output was.
+
+The actual outputs from CodeQL depend on the C compiler and platform so it is
+possible to observe spurious failures of the runner. In such cases inspect the
+outputs manually to verify that the failure is genuine. The [Explanations of
+Expected Outputs](#explanations-of-expected-outputs) section explains each
+policy and expected results in detail and should be helpful for this.
 
 ## Plots
 
@@ -342,7 +359,7 @@ used, when dependency compilation is parallelized.
 
 ### atomic_data_locs(.txt)
 
-[Table](plotting/reference/dependency_times.txt)
+[Table](plotting/reference/atomic_data_locs.txt)
 
 This table shows the calculated numbers we quote in **Section 7.3**. In the second
 table we quote the numbers from the "LoC Workspace" column, as this represents
@@ -350,10 +367,13 @@ the lines of code that could cause a marker change. We plan to add the "Mean
 #LoC changed" from "LoC Including Deps" statistic to the paper with something
 like
 
-> Within the 937 functional commits, 84 commits change one or more code lines
-> touched by the analysis (1165 LoC changed on average). Of those 66 commits
-> modify lines in the workspace (60 lines change on average) and could cause an
-> adjustment to the markers.
+> On average, Paralegal’s analysis touches 907 lines (min: 411 , max: 1196).
+> Within the 936 functional commits, 66 commits modify one or more analyzed line
+> (60 lines change on average). These numbers reflect only the lines of code in
+> the workspace, since only those can require adjustments to the markers. Over
+> the entire code base Paralegal’s analysis actually touches 22k lines, 84
+> commits perform changes to those with a mean of 1165 LoC changed per commit.
+
 
 ## CodeQL Comparison
 
@@ -384,6 +404,12 @@ codeql query run -d qdb ../../real-world-policies/plume-data-deletion.ql
 ```
 
 And now compare that output to `expected/plume-data-deletion.ql`.
+
+The actual outputs from CodeQL depend on the C compiler and platform so it is
+possible to observe spurious failures of the runner or divergence in the output.
+In such cases inspect the outputs manually to verify that the failure is
+genuine. The following section explains each policy and expected results in
+detail and should be helpful for this.
 
 ### Explanations of Expected Outputs
 
@@ -524,8 +550,6 @@ the format `<timestamp>-<purpose>` with the following purposes:
     tells you which run each row belongs to.
   - `sys.toml`: information about the system that this experiment was run on.
   - `bench-config.toml`: a copy of the configuration that was input to this run
-
-
 
 ## Case Study Versions
 
