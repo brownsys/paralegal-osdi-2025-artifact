@@ -145,7 +145,7 @@ In addition running CodeQL requires you have a C++ compiler like gcc or clang as
 well as cmake installed.
 
 ```bash
-sudo apt install cmake clang
+sudo apt install cmake
 ```
 
 **This next set of instructions is only if you are operating on Linux.**
